@@ -1,2 +1,6 @@
 .out
 *.exe
+*.wav
+*.mp3
+*.aiff
+*.raw
