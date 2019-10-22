@@ -1,0 +1,455 @@
+#include <cstdint>
+#include <logger/logger.h>
+#include <sstream>
+#include <strsafe.h>
+
+#include <windows.h>
+
+// These headers must be included after windows.h.
+#include <avrt.h>
+#include <functiondiscoverykeys.h>
+
+#include "audiocore.h"
+#include "util.h"
+
+using namespace Windows::Media::Devices;
+
+extern Logger::Logger *Log;
+
+AudioCore::AudioCore(PCMAudio::Engine *engine, HANDLE refreshEvent,
+                     HANDLE failEvent, HANDLE nextEvent)
+    : mEngine(engine), mRefreshEvent(refreshEvent), mFailEvent(failEvent),
+      mNextEvent(nextEvent) {}
+
+void AudioCore::LogMixFormat() {
+  std::wstringstream wss;
+
+  wss << L"MixFormat = {";
+  wss << L"nChannels: " << mMixFormat->nChannels << L", ";
+  wss << L"nSamplesPerSec: " << mMixFormat->nSamplesPerSec << L", ";
+  wss << L"wBitsPerSample: " << mMixFormat->wBitsPerSample << L", ";
+
+  WAVEFORMATEXTENSIBLE *mixFormatEx =
+      reinterpret_cast<WAVEFORMATEXTENSIBLE *>(mMixFormat);
+
+  wss << L"wValidBitsPerSample: " << mixFormatEx->Samples.wValidBitsPerSample
+      << L"}";
+
+  Log->Info(wss.str(), GetCurrentThreadId(), __LINE__, __WFILE__);
+}
+
+void AudioCore::Shutdown() {
+  if (mShutdownEvent != nullptr) {
+
+    Log->Info(L"Send event (mShutdownEvent)", GetCurrentThreadId(), __LINE__,
+              __WFILE__);
+
+    if (!SetEvent(mShutdownEvent)) {
+      Log->Fail(L"Failed to set mShutdownEvent", GetCurrentThreadId(), __LINE__,
+                __WFILE__);
+      return;
+    }
+
+    mShutdownEvent = nullptr;
+  }
+  if (mRenderThread != nullptr) {
+    WaitForSingleObject(mRenderThread, INFINITE);
+    CloseHandle(mRenderThread);
+    mRenderThread = nullptr;
+  }
+  if (mMixFormat != nullptr) {
+    CoTaskMemFree(mMixFormat);
+    mMixFormat = nullptr;
+  }
+
+  SafeCloseHandle(&mRenderEvent);
+  SafeCloseHandle(&mShutdownEvent);
+  SafeCloseHandle(&mSwitchStreamEvent);
+  SafeRelease(&mDevice);
+  SafeRelease(&mDeviceEnumerator);
+  SafeRelease(&mAudioRenderClient);
+  SafeRelease(&mAudioClient);
+}
+
+HRESULT
+AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
+  HRESULT hr{S_OK};
+  HRESULT hrActivateResult{S_OK};
+  IUnknown *unknown{nullptr};
+
+  hr = operation->GetActivateResult(&hrActivateResult, &unknown);
+
+  if (!SUCCEEDED(hr) || !SUCCEEDED(hrActivateResult)) {
+    Log->Fail(L"Failed to call "
+              "IActivateAudioInterfaceAsyncOperation::GetActivateResult",
+              GetCurrentThreadId(), __LINE__, __WFILE__);
+    goto CLEAN;
+  }
+
+  unknown->QueryInterface(IID_PPV_ARGS(&mAudioClient));
+
+  if (mAudioClient == nullptr) {
+    Log->Fail(L"Failed to get mAudioClient", GetCurrentThreadId(), __LINE__,
+              __WFILE__);
+    hr = E_FAIL;
+    goto CLEAN;
+  }
+
+  hr = mAudioClient->GetMixFormat(&mMixFormat);
+
+  if (FAILED(hr)) {
+    Log->Fail(L"Failed to call IAudioClient::GetMixFormat",
+              GetCurrentThreadId(), __LINE__, __WFILE__);
+    goto CLEAN;
+  }
+  if (reinterpret_cast<WAVEFORMATEXTENSIBLE *>(mMixFormat)->SubFormat !=
+      KSDATAFORMAT_SUBTYPE_PCM) {
+    reinterpret_cast<WAVEFORMATEXTENSIBLE *>(mMixFormat)->SubFormat =
+        KSDATAFORMAT_SUBTYPE_PCM;
+  }
+
+  mFrameSize = mMixFormat->nBlockAlign;
+
+  LogMixFormat();
+
+  hr = mAudioClient->Initialize(
+      AUDCLNT_SHAREMODE_SHARED,
+      AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_NOPERSIST,
+      mHNSBufferDuration, mHNSBufferDuration, mMixFormat, nullptr);
+
+  if (FAILED(hr)) {
+    Log->Fail(L"Failed to initialize mAudioClient", GetCurrentThreadId(),
+              __LINE__, __WFILE__);
+    goto CLEAN;
+  }
+
+  hr = mAudioClient->GetBufferSize(&mBufferFrames);
+
+  if (FAILED(hr)) {
+    Log->Fail(L"Failed to call IAudioClient::GetBufferSize",
+              GetCurrentThreadId(), __LINE__, __WFILE__);
+    goto CLEAN;
+  }
+
+  hr = mAudioClient->GetService(__uuidof(IAudioRenderClient),
+                                (void **)&mAudioRenderClient);
+
+  if (FAILED(hr)) {
+    Log->Fail(L"Failed to get mAudioRenderClient", GetCurrentThreadId(),
+              __LINE__, __WFILE__);
+    goto CLEAN;
+  }
+
+  mRenderEvent =
+      CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
+
+  if (mRenderEvent == nullptr) {
+    Log->Fail(L"Failed to create mRenderEvent", GetCurrentThreadId(), __LINE__,
+              __WFILE__);
+    hr = E_FAIL;
+    goto CLEAN;
+  }
+
+  mShutdownEvent =
+      CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
+
+  if (mShutdownEvent == nullptr) {
+    Log->Fail(L"Failed to create mShutdownEvent", GetCurrentThreadId(),
+              __LINE__, __WFILE__);
+    hr = E_FAIL;
+    goto CLEAN;
+  }
+
+  mSwitchStreamEvent =
+      CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
+
+  if (mSwitchStreamEvent == nullptr) {
+    Log->Fail(L"Failed to create mSwitchStreamEvent", GetCurrentThreadId(),
+              __LINE__, __WFILE__);
+    hr = E_FAIL;
+    goto CLEAN;
+  }
+
+  hr = mAudioClient->SetEventHandle(mRenderEvent);
+
+  if (FAILED(hr)) {
+    Log->Fail(L"Failed to call IAudioClient::SetEventHandle",
+              GetCurrentThreadId(), __LINE__, __WFILE__);
+    goto CLEAN;
+  }
+
+  mRenderThread = CreateThread(nullptr, 0, RenderThread, this, 0, nullptr);
+
+  if (mRenderThread == nullptr) {
+    Log->Fail(L"Failed to create mRenderThread", GetCurrentThreadId(), __LINE__,
+              __WFILE__);
+    goto CLEAN;
+  }
+
+  hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr, CLSCTX_ALL,
+                        IID_PPV_ARGS(&mDeviceEnumerator));
+
+  if (FAILED(hr)) {
+    Log->Fail(L"Failed to create mDeviceEnumerator", GetCurrentThreadId(),
+              __LINE__, __WFILE__);
+    goto CLEAN;
+  }
+
+  hr = mDeviceEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &mDevice);
+
+  if (FAILED(hr)) {
+    Log->Fail(L"Failed to create mDevice", GetCurrentThreadId(), __LINE__,
+              __WFILE__);
+    goto CLEAN;
+  }
+
+  IPropertyStore *ps;
+
+  hr = mDevice->OpenPropertyStore(STGM_READ, &ps);
+
+  if (FAILED(hr)) {
+    Log->Fail(L"Failed to open property store", GetCurrentThreadId(), __LINE__,
+              __WFILE__);
+    goto CLEAN;
+  }
+
+  PROPVARIANT friendlyName;
+  PropVariantInit(&friendlyName);
+
+  hr = ps->GetValue(PKEY_Device_FriendlyName, &friendlyName);
+
+  if (FAILED(hr)) {
+    Log->Fail(L"Failed to get friendly name", GetCurrentThreadId(), __LINE__,
+              __WFILE__);
+    goto CLEAN;
+  }
+
+  wchar_t *deviceId = new wchar_t[256]{};
+
+  hr = mDevice->GetId(&deviceId);
+
+  if (FAILED(hr)) {
+    Log->Fail(L"Failed to call IMMDevice::GetId", GetCurrentThreadId(),
+              __LINE__, __WFILE__);
+    goto CLEAN;
+  }
+
+  constexpr size_t deviceNameLen{512};
+  wchar_t *deviceName = new wchar_t[deviceNameLen]{};
+
+  hr = StringCbPrintfW(
+      deviceName, deviceNameLen, L"Default device name: %s (DeviceId=%s)",
+      friendlyName.vt != VT_LPWSTR ? L"Unknown" : friendlyName.pwszVal,
+      deviceId);
+
+  if (FAILED(hr)) {
+    Log->Fail(L"Failed to read friendly name", GetCurrentThreadId(), __LINE__,
+              __WFILE__);
+    goto CLEAN;
+  }
+
+  Log->Info(deviceName, GetCurrentThreadId(), __LINE__, __WFILE__);
+
+  PropVariantClear(&friendlyName);
+
+  mNotification = new Notification(mSwitchStreamEvent, mDeviceRole, deviceId);
+  hr = mDeviceEnumerator->RegisterEndpointNotificationCallback(mNotification);
+
+  if (FAILED(hr)) {
+    Log->Fail(L"Failed to call "
+              L"DeviceEnumerator::RegisterEndpointNotificationCallback",
+              GetCurrentThreadId(), __LINE__, __WFILE__);
+    goto CLEAN;
+  }
+
+  hr = mAudioClient->Start();
+
+  if (FAILED(hr)) {
+    Log->Fail(L"Failed to call IAudioClient::Start", GetCurrentThreadId(),
+              __LINE__, __WFILE__);
+    goto CLEAN;
+  }
+
+  Log->Info(L"Complete initialize audio core", GetCurrentThreadId(), __LINE__,
+            __WFILE__);
+
+CLEAN:
+  if (FAILED(hr)) {
+    SafeRelease(&mDeviceEnumerator);
+    SafeCloseHandle(&mRenderThread);
+    SafeCloseHandle(&mRenderEvent);
+    SafeCloseHandle(&mSwitchStreamEvent);
+    SafeCloseHandle(&mShutdownEvent);
+    SafeRelease(&mAudioRenderClient);
+    SafeRelease(&mAudioClient);
+    SafeRelease(&unknown);
+
+    Log->Info(L"Send event (mFailEvent)", GetCurrentThreadId(), __LINE__,
+              __WFILE__);
+
+    if (!SetEvent(mFailEvent)) {
+      Log->Fail(L"Failed to set mFailEvent", GetCurrentThreadId(), __LINE__,
+                __WFILE__);
+    }
+  }
+
+  // Always must return S_OK.
+  return S_OK;
+}
+
+DWORD AudioCore::RenderThread(LPVOID Context) {
+  AudioCore *renderer = static_cast<AudioCore *>(Context);
+
+  return renderer->DoRenderThread();
+}
+
+DWORD AudioCore::DoRenderThread() {
+  Log->Info(L"Start audio render thread", GetCurrentThreadId(), __LINE__,
+            __WFILE__);
+
+  HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+
+  if (FAILED(hr)) {
+    Log->Fail(L"Failed to call CoInitializeEx", GetCurrentThreadId(), __LINE__,
+              __WFILE__);
+    return hr;
+  }
+
+  HANDLE mmcssHandle{nullptr};
+  HANDLE waitArray[3] = {mShutdownEvent, mSwitchStreamEvent, mRenderEvent};
+  DWORD mmcssTaskIndex{0};
+
+  if (!mDisableMMCSS) {
+    mmcssHandle = AvSetMmThreadCharacteristics("Audio", &mmcssTaskIndex);
+    if (mmcssHandle == nullptr) {
+      Log->Warn(L"Failed to call AvSetMmThreadCharacteristics",
+                GetCurrentThreadId(), __LINE__, __WFILE__);
+    } else {
+      Log->Info(L"Success applying MMCSS attribute", GetCurrentThreadId(),
+                __LINE__, __WFILE__);
+    }
+  }
+
+  int bytesPerSample{mMixFormat->wBitsPerSample / 8};
+  bool isPlaying{true};
+
+  mEngine->SetTargetSamplesPerSec(mMixFormat->nSamplesPerSec);
+
+  while (isPlaying) {
+    DWORD waitResult = WaitForMultipleObjects(3, waitArray, FALSE, INFINITE);
+
+    switch (waitResult) {
+    case WAIT_OBJECT_0 + 0: // mShutdownEvent
+      Log->Info(L"Received shutdown event", GetCurrentThreadId(), __LINE__,
+                __WFILE__);
+      isPlaying = false;
+      break;
+    case WAIT_OBJECT_0 + 1: // mSwitchStreamEvent
+      hr = mDeviceEnumerator->UnregisterEndpointNotificationCallback(
+          mNotification);
+
+      if (FAILED(hr)) {
+        Log->Fail(L"Failed to call "
+                  "IMMDeviceEnumerator::UnregisterEndpointNotificationCallback",
+                  GetCurrentThreadId(), __LINE__, __WFILE__);
+        break;
+      }
+
+      Log->Info(L"Switch render device", GetCurrentThreadId(), __LINE__,
+                __WFILE__);
+      isPlaying = false;
+      break;
+    case WAIT_OBJECT_0 + 2: // mRenderEvent
+      BYTE *pData{nullptr};
+      UINT32 padding{};
+      UINT32 availableFrames{};
+
+      hr = mAudioClient->GetCurrentPadding(&padding);
+
+      if (!SUCCEEDED(hr)) {
+        Log->Warn(L"Failed to call IAudioClient::GetCurrentPadding",
+                  GetCurrentThreadId(), __LINE__, __WFILE__);
+        isPlaying = false;
+        break;
+      }
+
+      availableFrames = mBufferFrames - padding;
+
+      hr = mAudioRenderClient->GetBuffer(availableFrames, &pData);
+
+      if (!SUCCEEDED(hr)) {
+        Log->Warn(L"Failed to call IAudioRenderClient::GetBuffer",
+                  GetCurrentThreadId(), __LINE__, __WFILE__);
+        isPlaying = false;
+        break;
+      }
+
+      int samples =
+          static_cast<int>(availableFrames * mFrameSize) / bytesPerSample;
+
+      for (int i = 0; i < samples; i++) {
+        double f64 = mEngine->Read();
+        int32_t s32 = static_cast<int32_t>(f64);
+
+        for (int j = 0; j < bytesPerSample; j++) {
+          pData[bytesPerSample * i + bytesPerSample - 1 - j] =
+              s32 >> (8 * (bytesPerSample - 1 - j)) & 0xFF;
+        }
+
+        mEngine->Next();
+
+        if (!mEngine->IsCompleted()) {
+          continue;
+        }
+
+        Log->Info(L"Send event (mNextEvent)", GetCurrentThreadId(), __LINE__,
+                  __WFILE__);
+
+        if (!SetEvent(mNextEvent)) {
+          Log->Fail(L"Failed to set next event", GetCurrentThreadId(), __LINE__,
+                    __WFILE__);
+        }
+
+        mEngine->Reset();
+      }
+
+      hr = mAudioRenderClient->ReleaseBuffer(availableFrames, 0);
+
+      if (!SUCCEEDED(hr)) {
+        Log->Warn(L"Failed to call IAudioRenderClient::releaseBuffer",
+                  GetCurrentThreadId(), __LINE__, __WFILE__);
+        isPlaying = false;
+        break;
+      }
+
+      break;
+    }
+  }
+  if (!mDisableMMCSS) {
+    AvRevertMmThreadCharacteristics(mmcssHandle);
+  }
+
+  hr = mAudioClient->Stop();
+
+  if (FAILED(hr)) {
+    Log->Fail(L"Failed to call IAudioClient::Stop", GetCurrentThreadId(),
+              __LINE__, __WFILE__);
+    return hr;
+  }
+
+  Log->Info(L"Send event (mRefreshEvent)", GetCurrentThreadId(), __LINE__,
+            __WFILE__);
+
+  if (!SetEvent(mRefreshEvent)) {
+    Log->Fail(L"Failed to set mRefreshEvent", GetCurrentThreadId(), __LINE__,
+              __WFILE__);
+    return E_FAIL;
+  }
+
+  CoUninitialize();
+
+  Log->Info(L"End audio render thread", GetCurrentThreadId(), __LINE__,
+            __WFILE__);
+
+  return S_OK;
+}
