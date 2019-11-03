@@ -1,3 +1,4 @@
+#include <sstream>
 #include "logloop.h"
 
 #include <logger/logger.h>
@@ -12,6 +13,11 @@ DWORD logLoop(LPVOID Context) {
   if (ctx == nullptr) {
     return E_FAIL;
   }
+
+  std::wstringstream wss;
+  wss << L"Log output path:";
+  wss << ctx->FullLogPath;
+  Log->Info(wss.str(), GetCurrentThreadId(), __LINE__, __WFILE__);
 
   bool isActive{true};
   HANDLE hLogFile{nullptr};

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -51,7 +53,15 @@ func fadeOutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func feedHandler(w http.ResponseWriter, r *http.Request) {
-	ssml := "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>Hello <prosody contour='(0%,+80Hz) (10%,+80%) (40%,+80Hz)'>World</prosody><break time='500ms' /> Goodbye <prosody rate='slow' contour='(0%,+20Hz) (10%,+30%) (40%,+10Hz)'>World</prosody></speak>"
+	buf := &bytes.Buffer{}
+	if _, err := io.Copy(buf, r.Body); err != nil {
+		fmt.Printf("error while reading request body (%v)\n", err)
+	}
+	tts := buf.String()
+	if tts == "" {
+		tts = "placeholder"
+	}
+	ssml := fmt.Sprintf("<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>%s</speak>", tts)
 
 	text, err := syscall.UTF16FromString(ssml)
 	if err != nil {
