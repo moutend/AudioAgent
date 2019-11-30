@@ -20,4 +20,9 @@ export void __stdcall FadeIn(int32_t *code);
 export void __stdcall FadeOut(int32_t *code);
 export void __stdcall Feed(int32_t *code, Command **commandsPtr,
                            int32_t commandsLength);
+export void __stdcall GetVoiceCount(int32_t *code, int32_t *numberOfVoices);
+export void __stdcall GetVoiceName(int32_t *code, int32_t index,
+                                   wchar_t *voiceName);
+export void __stdcall GetVoiceNameLength(int32_t *code, int32_t index,
+                                         int32_t *voiceNameLength);
 }

@@ -44,14 +44,15 @@ DWORD WINAPI voiceLoop(LPVOID context) {
   }
 
   ctx->VoiceCount = synth->AllVoices->Size;
-  ctx->VoiceList = new wchar_t *[synth->AllVoices->Size];
+  ctx->Voices = new wchar_t *[synth->AllVoices->Size];
 
   for (unsigned int i = 0; i < ctx->VoiceCount; ++i) {
     VoiceInformation ^ info = synth->AllVoices->GetAt(i);
     size_t voiceNameLen = wcslen(info->Id->Data());
+    // Ensure null terminated
     ctx->VoiceList[i] = new wchar_t[voiceNameLen + 1]{};
 
-    std::wmemcpy(ctx->VoiceList[i], info->Id->Data(), voiceNameLen);
+    std::wmemcpy(ctx->Voices[i], info->Id->Data(), voiceNameLen);
   }
   while (isActive) {
     HANDLE waitArray[2] = {ctx->FeedEvent, ctx->QuitEvent};
