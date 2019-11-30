@@ -6,7 +6,7 @@
 
 extern Logger::Logger *Log;
 
-DWORD logLoop(LPVOID Context) {
+DWORD WINAPI logLoop(LPVOID context) {
   LogLoopContext *ctx = static_cast<LogLoopContext *>(Context);
 
   if (ctx == nullptr) {

@@ -2,4 +2,4 @@
 
 #include <windows.h>
 
-DWORD logLoop(LPVOID Context);
+DWORD WINAPI logLoop(LPVOID context);
