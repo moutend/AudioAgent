@@ -50,7 +50,7 @@ DWORD WINAPI voiceLoop(LPVOID context) {
     VoiceInformation ^ info = synth->AllVoices->GetAt(i);
     size_t voiceNameLen = wcslen(info->Id->Data());
     // Ensure null terminated
-    ctx->VoiceList[i] = new wchar_t[voiceNameLen + 1]{};
+    ctx->Voices[i] = new wchar_t[voiceNameLen + 1]{};
 
     std::wmemcpy(ctx->Voices[i], info->Id->Data(), voiceNameLen);
   }

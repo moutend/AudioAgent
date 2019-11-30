@@ -473,7 +473,7 @@ void __stdcall GetVoiceCount(int32_t *code, int32_t *numberOfVoices) {
   *code = 0;
 
   if (numberOfVoices == nullptr) {
-    code = -1;
+    *code = -1;
     return;
   }
 
@@ -481,7 +481,7 @@ void __stdcall GetVoiceCount(int32_t *code, int32_t *numberOfVoices) {
 }
 
 void __stdcall GetVoiceName(int32_t *code, int32_t index, wchar_t *voiceName) {
-  if (code == nulptr) {
+  if (code == nullptr) {
     return;
   }
 
@@ -493,7 +493,7 @@ void __stdcall GetVoiceName(int32_t *code, int32_t index, wchar_t *voiceName) {
 
 void __stdcall GetVoiceNameLength(int32_t *code, int32_t index,
                                   int32_t *voiceNameLength) {
-  if (code == nulptr) {
+  if (code == nullptr) {
     return;
   }
 
