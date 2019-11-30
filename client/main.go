@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -24,12 +25,14 @@ type Command struct {
 var (
 	dll = syscall.NewLazyDLL("AudioNode.dll")
 
-	procStart = dll.NewProc("Start")
-	procQuit  = dll.NewProc("Quit")
-
-	procFadeIn  = dll.NewProc("FadeIn")
-	procFadeOut = dll.NewProc("FadeOut")
-	procFeed    = dll.NewProc("Feed")
+	procStart              = dll.NewProc("Start")
+	procQuit               = dll.NewProc("Quit")
+	procFadeIn             = dll.NewProc("FadeIn")
+	procFadeOut            = dll.NewProc("FadeOut")
+	procFeed               = dll.NewProc("Feed")
+	procGetVoiceCount      = dll.NewProc("GetVoiceCount")
+	procGetVoiceName       = dll.NewProc("GetVoiceName")
+	procGetVoiceNameLength = dll.NewProc("GetVoiceNameLength")
 )
 
 func fadeInHandler(w http.ResponseWriter, r *http.Request) {
@@ -98,6 +101,51 @@ func feedHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func voicesHandler(w http.ResponseWriter, r *http.Request) {
+	code := int32(0)
+	numberOfVoices := int32(0)
+
+	procGetVoiceCount.Call(uintptr(unsafe.Pointer(&code)), uintptr(unsafe.Pointer(&numberOfVoices)))
+
+	if code != 0 {
+		log.Printf("Failed to call GetVoiceCount() code=%d", code)
+	}
+
+	voiceNames := []string{}
+	voiceNameLength := int32(0)
+
+	for i := int32(0); i < numberOfVoices; i++ {
+		procGetVoiceNameLength.Call(uintptr(unsafe.Pointer(&code)), uintptr(i), uintptr(unsafe.Pointer(&voiceNameLength)))
+
+		if code == 0 {
+			log.Printf("Failed to call GetVoiceNameLength() code=%d", code)
+			continue
+		}
+
+		voiceName := make([]uint16, voiceNameLength)
+
+		procGetVoiceName.Call(uintptr(unsafe.Pointer(&code)), uintptr(i), uintptr(unsafe.Pointer(&voiceName)))
+
+		if code != 0 {
+			log.Printf("Failed to call GetVoiceName() code=%d", code)
+			continue
+		}
+
+		voiceNames = append(voiceNames, syscall.UTF16ToString(voiceName))
+	}
+	data, err := json.Marshal(struct {
+		Voices []string
+	}{
+		Voices: voiceNames,
+	})
+	if err != nil {
+		log.Fatal("failed to call json.Marshal()")
+		return
+	}
+
+	io.Copy(w, bytes.NewBuffer(data))
+}
+
 func startHandler(w http.ResponseWriter, r *http.Request) {
 	u, err := user.Current()
 
@@ -141,6 +189,7 @@ func main() {
 	mux.HandleFunc("/v1/engine/fadein", fadeInHandler)
 	mux.HandleFunc("/v1/engine/fadeout", fadeOutHandler)
 	mux.HandleFunc("/v1/engine/feed", feedHandler)
+	mux.HandleFunc("/v1/engine/voices", voicesHandler)
 	mux.HandleFunc("/v1/engine/start", startHandler)
 	mux.HandleFunc("/v1/engine/quit", quitHandler)
 
