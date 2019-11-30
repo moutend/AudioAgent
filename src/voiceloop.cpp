@@ -118,10 +118,10 @@ DWORD WINAPI voiceLoop(LPVOID context) {
         .wait();
   }
   for (unsigned int i = 0; i < ctx->VoiceCount; i++) {
-    delete[] ctx->VoiceList[i];
+    delete[] ctx->Voices[i];
   }
 
-  delete[] ctx->VoiceList;
+  delete[] ctx->Voices;
   RoUninitialize();
 
   Log->Info(L"End Voice loop thread", GetCurrentThreadId(), __LINE__,
