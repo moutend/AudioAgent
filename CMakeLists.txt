@@ -1,9 +1,5 @@
-cmake_minimum_required(VERSION 3.14)
-PROJECT(AudioAgent)
-set(CMAKE_CXX_STANDARD 17)
-
-# git branch | grep \* | cut -d ' ' -f2
-# git rev-parse --verify HEAD
+cmake_minimum_required(VERSION 3.12)
+PROJECT(AudioNode)
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR OR EXISTS "${CMAKE_BINARY_DIR}/CMakeLists.txt")
   message(FATAL_ERROR "In-source builds are not allowed.")
@@ -13,10 +9,10 @@ if(NOT WIN32)
   message(FATAL "This project targets Windows")
 endif()
 
-# These settings targets VisualStudio 2019. Change metadata1 and metadata2 according the VisualStudio version.
-set(metadata1 "C:\\Program Files (x86)\\Windows Kits\\10\\UnionMetadata\\10.0.18362.0")
-set(metadata2 "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\Common7\\IDE\\VC\\vcpackages")
-
+# windows.winmd search path
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -AI\"C:/Program Files (x86)/Windows Kits/10/UnionMetadata/10.0.17763.0\"" )
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -AI\"C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/Common7/IDE/VC/vcpackages\"" )
+set(CMAKE_CXX_STANDARD 17)
 set(
   SOURCES
   src/dllmain.cpp
@@ -43,23 +39,9 @@ set(
   src/util.h
 )
 
-include_directories(lib)
+add_subdirectory(lib/cpplogger)
+include_directories(lib/cpplogger/src)
 
-set(
-  LIBRARY_SOURCES
-  lib/logger/logger.h
-  lib/logger/logger.cpp
-  lib/pcmaudio/reader.h
-  lib/pcmaudio/reader.cpp
-  lib/pcmaudio/wave.h
-  lib/pcmaudio/wave.cpp
-  lib/pcmaudio/engine.h
-  lib/pcmaudio/engine.cpp
-)
-
-add_library(libhelper STATIC ${LIBRARY_SOURCES})
 add_compile_options("/ZW")
-add_library(AudioAgent SHARED ${SOURCES})
-
-target_compile_options(AudioAgent PRIVATE $<$<BOOL:${MSVC}>:/AI${metadata1} /AI${metadata2}>)
-target_link_libraries(AudioAgent libhelper avrt.lib mmdevapi.lib)
+add_library(AudioNode SHARED ${SOURCES})
+target_link_libraries(AudioNode cpplogger avrt.lib mmdevapi.lib)
