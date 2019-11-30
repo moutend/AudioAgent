@@ -22,7 +22,7 @@ type Command struct {
 }
 
 var (
-	dll = syscall.NewLazyDLL("AudioAgent.dll")
+	dll = syscall.NewLazyDLL("AudioNode.dll")
 
 	procStart = dll.NewProc("Start")
 	procQuit  = dll.NewProc("Quit")
