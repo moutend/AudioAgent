@@ -17,6 +17,8 @@ struct VoiceLoopContext {
   wchar_t *BufferPtr = nullptr;
   int32_t BufferLen = 0;
   PCMAudio::RingEngine *VoiceEngine = nullptr;
+  wchar_t **VoiceList = nullptr;
+  unsigned int VoiceCount = 0;
 };
 
 struct SoundLoopContext {

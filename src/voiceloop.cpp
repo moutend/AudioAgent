@@ -1,4 +1,5 @@
 #include <cpplogger.h>
+#include <cstring>
 #include <engine.h>
 #include <ppltasks.h>
 #include <roapi.h>
@@ -42,6 +43,15 @@ DWORD WINAPI voiceLoop(LPVOID context) {
     options->AppendedSilence = SpeechAppendedSilence::Min;
   }
 
+  ctx->VoiceCount = synth->AllVoices->Size;
+  ctx->VoiceList = new wchar_t *[synth->AllVoices->Size];
+
+  for (unsigned int i = 0; i < ctx->VoiceCount; ++i) {
+    VoiceInformation ^ info = synth->AllVoices->GetAt(i);
+    size_t voiceNameLen = wcslen(info->Id->Data());
+    ctx->VoiceList[i] = new wchar_t[voiceNameLen];
+    std::wmemcpy(ctx->VoiceList[i], info->Id->Data());
+  }
   while (isActive) {
     HANDLE waitArray[2] = {ctx->FeedEvent, ctx->QuitEvent};
     DWORD waitResult = WaitForMultipleObjects(2, waitArray, FALSE, INFINITE);
@@ -105,7 +115,11 @@ DWORD WINAPI voiceLoop(LPVOID context) {
         })
         .wait();
   }
+  for (unsigned int i = 0; i < ctx->VoiceCount; i++) {
+    delete[] ctx->VoiceList[i];
+  }
 
+  delete[] ctx->VoiceList;
   RoUninitialize();
 
   Log->Info(L"End Voice loop thread", GetCurrentThreadId(), __LINE__,
