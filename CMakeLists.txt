@@ -45,4 +45,4 @@ include_directories(lib/cpplogger/src lib/cppaudio/src)
 
 add_compile_options("/ZW")
 add_library(AudioNode SHARED ${SOURCES})
-target_link_libraries(AudioNode cpplogger avrt.lib mmdevapi.lib)
+target_link_libraries(AudioNode cpplogger cppaudio avrt.lib mmdevapi.lib)
