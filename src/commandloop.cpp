@@ -6,11 +6,11 @@
 
 extern Logger::Logger *Log;
 
-DWORD commandLoop(LPVOID Context) {
+DWORD WINAPI commandLoop(LPVOID context) {
   Log->Info(L"Start command loop thread", GetCurrentThreadId(), __LINE__,
             __WFILE__);
 
-  CommandLoopContext *ctx = static_cast<CommandLoopContext *>(Context);
+  CommandLoopContext *ctx = static_cast<CommandLoopContext *>(context);
 
   if (ctx == nullptr) {
     Log->Fail(L"Failed to obtain ctx", GetCurrentThreadId(), __LINE__,
