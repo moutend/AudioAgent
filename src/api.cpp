@@ -39,7 +39,7 @@ HANDLE nextSoundEvent{nullptr};
 PCMAudio::RingEngine *voiceEngine{nullptr};
 PCMAudio::LauncherEngine *soundEngine{nullptr};
 
-void Start(int32_t *code, const wchar_t *logPath, int32_t logLevel) {
+void __stdcall Start(int32_t *code, const wchar_t *logPath, int32_t logLevel) {
   std::lock_guard<std::mutex> lock(apiMutex);
 
   if (isActive) {
@@ -272,7 +272,7 @@ void Start(int32_t *code, const wchar_t *logPath, int32_t logLevel) {
   isActive = true;
 }
 
-void Quit(int32_t *code) {
+void __stdcall Quit(int32_t *code) {
   std::lock_guard<std::mutex> lock(apiMutex);
 
   if (!isActive) {
