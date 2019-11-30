@@ -387,7 +387,7 @@ void __stdcall Quit(int32_t *code) {
   isActive = false;
 }
 
-void FadeIn(int32_t *code) {
+void __stdcall FadeIn(int32_t *code) {
   std::lock_guard<std::mutex> lock(apiMutex);
 
   if (!isActive) {
@@ -399,7 +399,7 @@ void FadeIn(int32_t *code) {
   soundEngine->FadeIn();
 }
 
-void FadeOut(int32_t *code) {
+void __stdcall FadeOut(int32_t *code) {
   std::lock_guard<std::mutex> lock(apiMutex);
 
   if (!isActive) {
@@ -411,7 +411,8 @@ void FadeOut(int32_t *code) {
   soundEngine->FadeOut();
 }
 
-void Feed(int32_t *code, Command **commandsPtr, int32_t commandsLength) {
+void __stdcall Feed(int32_t *code, Command **commandsPtr,
+                    int32_t commandsLength) {
   std::lock_guard<std::mutex> lock(apiMutex);
 
   if (!isActive) {
