@@ -6,11 +6,11 @@
 
 extern Logger::Logger *Log;
 
-DWORD soundLoop(LPVOID Context) {
+DWORD WINAPI soundLoop(LPVOID context) {
   Log->Info(L"Start sound loop thread", GetCurrentThreadId(), __LINE__,
             __WFILE__);
 
-  SoundLoopContext *ctx = static_cast<SoundLoopContext *>(Context);
+  SoundLoopContext *ctx = static_cast<SoundLoopContext *>(context);
 
   if (ctx == nullptr) {
     Log->Fail(L"Failed to obtain ctx", GetCurrentThreadId(), __LINE__,

@@ -19,11 +19,11 @@ using Windows::Foundation::Metadata::ApiInformation;
 
 extern Logger::Logger *Log;
 
-DWORD voiceLoop(LPVOID Context) {
+DWORD WINAPI voiceLoop(LPVOID context) {
   Log->Info(L"Start Voice loop thread", GetCurrentThreadId(), __LINE__,
             __WFILE__);
 
-  VoiceLoopContext *ctx = static_cast<VoiceLoopContext *>(Context);
+  VoiceLoopContext *ctx = static_cast<VoiceLoopContext *>(context);
 
   if (ctx == nullptr) {
     Log->Fail(L"Failed to obtain ctx", GetCurrentThreadId(), __LINE__,

@@ -10,11 +10,11 @@ using namespace Windows::Media::Devices;
 
 extern Logger::Logger *Log;
 
-DWORD audioLoop(LPVOID Context) {
+DWORD WINAPI audioLoop(LPVOID context) {
   Log->Info(L"Start audio loop thread", GetCurrentThreadId(), __LINE__,
             __WFILE__);
 
-  AudioLoopContext *ctx = static_cast<AudioLoopContext *>(Context);
+  AudioLoopContext *ctx = static_cast<AudioLoopContext *>(context);
 
   if (ctx == nullptr) {
     Log->Fail(L"Failed to obtain ctx", GetCurrentThreadId(), __LINE__,

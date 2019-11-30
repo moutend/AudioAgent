@@ -2,4 +2,4 @@
 
 #include <windows.h>
 
-DWORD soundLoop(LPVOID Context);
+DWORD WINAPI soundLoop(LPVOID context);

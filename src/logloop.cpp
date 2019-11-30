@@ -7,7 +7,7 @@
 extern Logger::Logger *Log;
 
 DWORD WINAPI logLoop(LPVOID context) {
-  LogLoopContext *ctx = static_cast<LogLoopContext *>(Context);
+  LogLoopContext *ctx = static_cast<LogLoopContext *>(context);
 
   if (ctx == nullptr) {
     return E_FAIL;
