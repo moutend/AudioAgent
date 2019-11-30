@@ -1,3 +1,6 @@
 [submodule "lib/cpplogger"]
 	path = lib/cpplogger
 	url = https://github.com/moutend/cpplogger
+[submodule "lib/cppaudio"]
+	path = lib/cppaudio
+	url = https://github.com/moutend/cppaudio
