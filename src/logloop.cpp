@@ -1,9 +1,8 @@
+#include <cpplogger.h>
 #include <sstream>
-#include "logloop.h"
-
-#include <logger/logger.h>
 
 #include "context.h"
+#include "logloop.h"
 
 extern Logger::Logger *Log;
 

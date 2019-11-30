@@ -1,5 +1,5 @@
+#include <cpplogger.h>
 #include <cstdint>
-#include <logger/logger.h>
 #include <sstream>
 #include <strsafe.h>
 

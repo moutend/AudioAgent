@@ -40,7 +40,8 @@ set(
 )
 
 add_subdirectory(lib/cpplogger)
-include_directories(lib/cpplogger/src)
+add_subdirectory(lib/cppaudio)
+include_directories(lib/cpplogger/src lib/cppaudio/src)
 
 add_compile_options("/ZW")
 add_library(AudioNode SHARED ${SOURCES})
