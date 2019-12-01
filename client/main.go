@@ -124,7 +124,7 @@ func voicesHandler(w http.ResponseWriter, r *http.Request) {
 
 		voiceName := make([]uint16, voiceNameLength)
 
-		procGetVoiceName.Call(uintptr(unsafe.Pointer(&code)), uintptr(i), uintptr(unsafe.Pointer(&voiceName)))
+		procGetVoiceName.Call(uintptr(unsafe.Pointer(&code)), uintptr(i), uintptr(unsafe.Pointer(&voiceName[0])))
 
 		if code != 0 {
 			log.Printf("Failed to call GetVoiceName() code=%d", code)
