@@ -116,9 +116,9 @@ DWORD WINAPI voiceLoop(LPVOID context) {
           }
         })
         .wait();
-    if (ctx->voiceInfoCtx != nullptr) {
+    if (ctx->VoiceInfoCtx != nullptr) {
       synth->Voice = synth->AllVoices->GetAt(static_cast<unsigned int>(
-          voiceLoopCtx->VoiceInfoCtx->RequestedDefaultVoiceIndex));
+          ctx->VoiceInfoCtx->RequestedDefaultVoiceIndex));
     }
   }
   for (unsigned int i = 0; i < ctx->VoiceCount; i++) {

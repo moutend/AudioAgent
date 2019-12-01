@@ -581,7 +581,8 @@ void __stdcall GetVoiceIdLength(int32_t *code, int32_t index,
     return;
   }
 
-  *idLength = wcslen(voiceInfoCtx->VoiceProperties[index]->Id);
+  *idLength =
+      static_cast<int32_t>(wcslen(voiceInfoCtx->VoiceProperties[index]->Id));
 }
 
 void __stdcall GetVoiceLanguage(int32_t *code, int32_t index,
