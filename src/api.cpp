@@ -66,7 +66,22 @@ void __stdcall Start(int32_t *code, const wchar_t *logPath, int32_t logLevel) {
   if (logLoopThread == nullptr) {
     Log->Fail(L"Failed to create log loop thread", GetCurrentThreadId(),
               __LINE__, __WFILE__);
-    *code = -5;
+    *code = -1;
+    return;
+  }
+
+  voiceInfoCtx = new VoiceInfoContext();
+
+  Log->Info(L"Create voice info thread", GetCurrentThreadId(), __LINE__,
+            __WFILE__);
+
+  voiceInfoThread = CreateThread(nullptr, 0, voiceInfo,
+                                 static_cast<void *>(voiceInfoCtx), 0, nullptr);
+
+  if (voiceInfoThread == nullptr) {
+    Log->Fail(L"Failed to create voice info thread", GetCurrentThreadId(),
+              __LINE__, __WFILE__);
+    *code = -2;
     return;
   }
 
@@ -78,13 +93,14 @@ void __stdcall Start(int32_t *code, const wchar_t *logPath, int32_t logLevel) {
   if (nextVoiceEvent == nullptr) {
     Log->Fail(L"Failed to create next event for voice threads",
               GetCurrentThreadId(), __LINE__, __WFILE__);
-    *code = -2;
+    *code = -3;
     return;
   }
 
   voiceLoopCtx = new VoiceLoopContext();
   voiceLoopCtx->NextEvent = nextVoiceEvent;
   voiceLoopCtx->VoiceEngine = voiceEngine;
+  voiceLoopCtx->VoiceInfoCtx = voiceInfoCtx;
 
   voiceLoopCtx->FeedEvent =
       CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
@@ -92,7 +108,7 @@ void __stdcall Start(int32_t *code, const wchar_t *logPath, int32_t logLevel) {
   if (voiceLoopCtx->FeedEvent == nullptr) {
     Log->Fail(L"Failed to create feed event for voice loop thread",
               GetCurrentThreadId(), __LINE__, __WFILE__);
-    *code = -3;
+    *code = -4;
     return;
   }
 
@@ -102,7 +118,7 @@ void __stdcall Start(int32_t *code, const wchar_t *logPath, int32_t logLevel) {
   if (voiceLoopCtx->QuitEvent == nullptr) {
     Log->Fail(L"Failed to create quit event for voice loop thread",
               GetCurrentThreadId(), __LINE__, __WFILE__);
-    *code = -4;
+    *code = -5;
     return;
   }
 
@@ -115,7 +131,7 @@ void __stdcall Start(int32_t *code, const wchar_t *logPath, int32_t logLevel) {
   if (voiceLoopThread == nullptr) {
     Log->Fail(L"Failed to create voice loop thread", GetCurrentThreadId(),
               __LINE__, __WFILE__);
-    *code = -5;
+    *code = -6;
     return;
   }
 
@@ -129,7 +145,7 @@ void __stdcall Start(int32_t *code, const wchar_t *logPath, int32_t logLevel) {
   if (voiceRenderCtx->QuitEvent == nullptr) {
     Log->Fail(L"Failed to create quit event for voice render thread",
               GetCurrentThreadId(), __LINE__, __WFILE__);
-    *code = -6;
+    *code = -7;
     return;
   }
 
@@ -142,7 +158,7 @@ void __stdcall Start(int32_t *code, const wchar_t *logPath, int32_t logLevel) {
   if (voiceRenderThread == nullptr) {
     Log->Fail(L"Failed to create voice render thread", GetCurrentThreadId(),
               __LINE__, __WFILE__);
-    *code = -7;
+    *code = -8;
     return;
   }
 
@@ -155,7 +171,7 @@ void __stdcall Start(int32_t *code, const wchar_t *logPath, int32_t logLevel) {
   if (nextSoundEvent == nullptr) {
     Log->Fail(L"Failed to create next event for sound", GetCurrentThreadId(),
               __LINE__, __WFILE__);
-    *code = -8;
+    *code = -9;
     return;
   }
 
@@ -169,7 +185,7 @@ void __stdcall Start(int32_t *code, const wchar_t *logPath, int32_t logLevel) {
   if (soundLoopCtx->FeedEvent == nullptr) {
     Log->Fail(L"Failed to create feed event for sound loop thread",
               GetCurrentThreadId(), __LINE__, __WFILE__);
-    *code = -9;
+    *code = -10;
     return;
   }
 
@@ -179,7 +195,7 @@ void __stdcall Start(int32_t *code, const wchar_t *logPath, int32_t logLevel) {
   if (soundLoopCtx->QuitEvent == nullptr) {
     Log->Fail(L"Failed to create quit event for sound loop thread",
               GetCurrentThreadId(), __LINE__, __WFILE__);
-    *code = -10;
+    *code = -11;
     return;
   }
 
@@ -192,7 +208,7 @@ void __stdcall Start(int32_t *code, const wchar_t *logPath, int32_t logLevel) {
   if (soundLoopThread == nullptr) {
     Log->Fail(L"Failed to create sound loop thread", GetCurrentThreadId(),
               __LINE__, __WFILE__);
-    *code = -11;
+    *code = -12;
     return;
   }
 
@@ -206,7 +222,7 @@ void __stdcall Start(int32_t *code, const wchar_t *logPath, int32_t logLevel) {
   if (soundRenderCtx->QuitEvent == nullptr) {
     Log->Fail(L"Failed to create quit event for sound render thread",
               GetCurrentThreadId(), __LINE__, __WFILE__);
-    *code = -12;
+    *code = -13;
     return;
   }
 
@@ -219,7 +235,7 @@ void __stdcall Start(int32_t *code, const wchar_t *logPath, int32_t logLevel) {
   if (soundRenderThread == nullptr) {
     Log->Fail(L"Failed to create sound render thread", GetCurrentThreadId(),
               __LINE__, __WFILE__);
-    *code = -13;
+    *code = -14;
     return;
   }
 
@@ -231,7 +247,7 @@ void __stdcall Start(int32_t *code, const wchar_t *logPath, int32_t logLevel) {
   if (commandLoopCtx->CommandEvent == nullptr) {
     Log->Fail(L"Failed to create command event for command loop thread",
               GetCurrentThreadId(), __LINE__, __WFILE__);
-    *code = -14;
+    *code = -15;
     return;
   }
 
@@ -241,7 +257,7 @@ void __stdcall Start(int32_t *code, const wchar_t *logPath, int32_t logLevel) {
   if (commandLoopCtx->QuitEvent == nullptr) {
     Log->Fail(L"Failed to create quit event for command loop thread",
               GetCurrentThreadId(), __LINE__, __WFILE__);
-    *code = -15;
+    *code = -16;
     return;
   }
 
@@ -267,21 +283,6 @@ void __stdcall Start(int32_t *code, const wchar_t *logPath, int32_t logLevel) {
 
   if (commandLoopThread == nullptr) {
     Log->Fail(L"Failed to create command loop thread", GetCurrentThreadId(),
-              __LINE__, __WFILE__);
-    *code = -16;
-    return;
-  }
-
-  voiceInfoCtx = new VoiceInfoContext();
-
-  Log->Info(L"Create voice info thread", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
-
-  voiceInfoThread = CreateThread(nullptr, 0, voiceInfo,
-                                 static_cast<void *>(voiceInfoCtx), 0, nullptr);
-
-  if (voiceInfoThread == nullptr) {
-    Log->Fail(L"Failed to create voice info thread", GetCurrentThreadId(),
               __LINE__, __WFILE__);
     *code = -17;
     return;

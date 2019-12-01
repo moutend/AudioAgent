@@ -38,6 +38,9 @@ DWORD WINAPI voiceInfo(LPVOID context) {
   ctx->Count = synth->AllVoices->Size;
   ctx->VoiceProperties = new VoiceProperty *[synth->AllVoices->Size];
 
+  VoiceInformation ^ defaultInfo = synth->Voice();
+  int32_t defaultVoiceIndex{};
+
   for (unsigned int i = 0; i < ctx->Count; ++i) {
     VoiceInformation ^ info = synth->AllVoices->GetAt(i);
 
@@ -56,7 +59,14 @@ DWORD WINAPI voiceInfo(LPVOID context) {
     ctx->VoiceProperties[i]->Language = new wchar_t[languageLength + 1]{};
     std::wmemcpy(ctx->VoiceProperties[i]->Language, info->Language->Data(),
                  languageLength);
+
+    if (defaultInfo->Id->Equals(info->Id)) {
+      defaultVoiceIndex = i;
+    }
   }
+
+  ctx->DefaultVoiceIndex = defaultVoiceIndex;
+  ctx->requestedDefaultVoiceIndex = defaultVoiceIndex;
 
   RoUninitialize();
 

@@ -116,6 +116,10 @@ DWORD WINAPI voiceLoop(LPVOID context) {
           }
         })
         .wait();
+    if (ctx->voiceInfoCtx != nullptr) {
+      synth->Voice = synth->AllVoices->GetAt(static_cast<unsigned int>(
+          voiceLoopCtx->VoiceInfoCtx->RequestedDefaultVoiceIndex));
+    }
   }
   for (unsigned int i = 0; i < ctx->VoiceCount; i++) {
     delete[] ctx->Voices[i];
