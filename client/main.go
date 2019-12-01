@@ -22,17 +22,31 @@ type Command struct {
 	SSMLPtr      uintptr
 }
 
+type VoicesResponse struct {
+	VoiceProperties []VoiceProperty `json:"voiceProperties"`
+}
+
+type VoiceProperty struct {
+	Id          string `json:"id"`
+	DisplayName string `json:"displayName"`
+	Language    string `json:"language"`
+}
+
 var (
 	dll = syscall.NewLazyDLL("AudioNode.dll")
 
-	procStart              = dll.NewProc("Start")
-	procQuit               = dll.NewProc("Quit")
-	procFadeIn             = dll.NewProc("FadeIn")
-	procFadeOut            = dll.NewProc("FadeOut")
-	procFeed               = dll.NewProc("Feed")
-	procGetVoiceCount      = dll.NewProc("GetVoiceCount")
-	procGetVoiceName       = dll.NewProc("GetVoiceName")
-	procGetVoiceNameLength = dll.NewProc("GetVoiceNameLength")
+	procStart                     = dll.NewProc("Start")
+	procQuit                      = dll.NewProc("Quit")
+	procFadeIn                    = dll.NewProc("FadeIn")
+	procFadeOut                   = dll.NewProc("FadeOut")
+	procFeed                      = dll.NewProc("Feed")
+	procGetVoiceCount             = dll.NewProc("GetVoiceCount")
+	procGetVoiceId                = dll.NewProc("GetVoiceId")
+	procGetVoiceIdLength          = dll.NewProc("GetVoiceIdLength")
+	procGetVoiceDisplayName       = dll.NewProc("GetVoiceDisplayName")
+	procGetVoiceDisplayNameLength = dll.NewProc("GetVoiceDisplayNameLength")
+	procGetVoiceLanguage          = dll.NewProc("GetVoiceLanguage")
+	procGetVoiceLanguageLength    = dll.NewProc("GetVoiceLanguageLength")
 )
 
 func fadeInHandler(w http.ResponseWriter, r *http.Request) {
@@ -111,32 +125,72 @@ func voicesHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Failed to call GetVoiceCount() code=%d", code)
 	}
 
-	voiceNames := []string{}
-	voiceNameLength := int32(0)
+	voiceProperties := []VoiceProperty{}
 
 	for i := int32(0); i < numberOfVoices; i++ {
-		procGetVoiceNameLength.Call(uintptr(unsafe.Pointer(&code)), uintptr(i), uintptr(unsafe.Pointer(&voiceNameLength)))
+		idLength := int32(0)
+
+		procGetVoiceIdLength.Call(uintptr(unsafe.Pointer(&code)), uintptr(i), uintptr(unsafe.Pointer(&idLength)))
 
 		if code != 0 {
-			log.Printf("Failed to call GetVoiceNameLength() code=%d", code)
+			log.Printf("Failed to call GetVoiceIdLength() code=%d", code)
 			continue
 		}
 
-		voiceName := make([]uint16, voiceNameLength)
+		id := make([]uint16, idLength)
 
-		procGetVoiceName.Call(uintptr(unsafe.Pointer(&code)), uintptr(i), uintptr(unsafe.Pointer(&voiceName[0])))
+		procGetVoiceId.Call(uintptr(unsafe.Pointer(&code)), uintptr(i), uintptr(unsafe.Pointer(&id[0])))
 
 		if code != 0 {
-			log.Printf("Failed to call GetVoiceName() code=%d", code)
+			log.Printf("Failed to call GetVoiceId() code=%d", code)
 			continue
 		}
 
-		voiceNames = append(voiceNames, syscall.UTF16ToString(voiceName))
+		displayNameLength := int32(0)
+
+		procGetVoiceDisplayNameLength.Call(uintptr(unsafe.Pointer(&code)), uintptr(i), uintptr(unsafe.Pointer(&displayNameLength)))
+
+		if code != 0 {
+			log.Printf("Failed to call GetVoiceDisplayNameLength() code=%d", code)
+			continue
+		}
+
+		displayName := make([]uint16, displayNameLength)
+
+		procGetVoiceDisplayName.Call(uintptr(unsafe.Pointer(&code)), uintptr(i), uintptr(unsafe.Pointer(&displayName[0])))
+
+		if code != 0 {
+			log.Printf("Failed to call GetVoiceDisplayName() code=%d", code)
+			continue
+		}
+
+		languageLength := int32(0)
+
+		procGetVoiceLanguageLength.Call(uintptr(unsafe.Pointer(&code)), uintptr(i), uintptr(unsafe.Pointer(&languageLength)))
+
+		if code != 0 {
+			log.Printf("Failed to call GetVoiceLanguageLength() code=%d", code)
+			continue
+		}
+
+		language := make([]uint16, languageLength)
+
+		procGetVoiceLanguage.Call(uintptr(unsafe.Pointer(&code)), uintptr(i), uintptr(unsafe.Pointer(&language[0])))
+
+		if code != 0 {
+			log.Printf("Failed to call GetVoiceLanguage() code=%d", code)
+			continue
+		}
+
+		voiceProperties = append(voiceProperties, VoiceProperty{
+			Id:          syscall.UTF16ToString(id),
+			DisplayName: syscall.UTF16ToString(displayName),
+			Language:    syscall.UTF16ToString(language),
+		})
 	}
-	data, err := json.Marshal(struct {
-		Voices []string `json:"voices"`
-	}{
-		Voices: voiceNames,
+
+	data, err := json.Marshal(VoicesResponse{
+		VoiceProperties: voiceProperties,
 	})
 	if err != nil {
 		log.Fatal("failed to call json.Marshal()")
