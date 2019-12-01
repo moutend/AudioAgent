@@ -476,6 +476,10 @@ void __stdcall GetVoiceCount(int32_t *code, int32_t *numberOfVoices) {
     *code = -1;
     return;
   }
+  if (voiceLoopCtx == nullptr) {
+    *code = -2;
+    return;
+  }
 
   *numberOfVoices = voiceLoopCtx->VoiceCount;
 }
@@ -486,6 +490,11 @@ void __stdcall GetVoiceName(int32_t *code, int32_t index, wchar_t *voiceName) {
   }
 
   *code = 0;
+
+  if (voiceLoopCtx == nullptr) {
+    *code = -1;
+    return;
+  }
 
   size_t voiceNameLen = wcslen(voiceLoopCtx->Voices[index]);
   std::wmemcpy(voiceName, voiceLoopCtx->Voices[index], voiceNameLen);
@@ -498,6 +507,11 @@ void __stdcall GetVoiceNameLength(int32_t *code, int32_t index,
   }
 
   *code = 0;
+
+  if (voiceLoopCtx == nullptr) {
+    *code = -1;
+    return;
+  }
 
   *voiceNameLength = wcslen(voiceLoopCtx->Voices[index]);
 }
