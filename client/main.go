@@ -290,7 +290,7 @@ func main() {
 	mux.HandleFunc("/v1/engine/fadeout", fadeOutHandler)
 	mux.HandleFunc("/v1/engine/feed", feedHandler)
 	mux.HandleFunc("/v1/engine/voices", voicesHandler)
-	mux.HandleFunc("/v1/engine/voices/default", voicesHandler)
+	mux.HandleFunc("/v1/engine/voice", voicesHandler)
 	mux.HandleFunc("/v1/engine/start", startHandler)
 	mux.HandleFunc("/v1/engine/quit", quitHandler)
 
