@@ -18,6 +18,8 @@ struct VoiceProperty {
 
 struct VoiceInfoContext {
   unsigned int Count = 0;
+  int32_t DefaultVoiceIndex = -1;
+  int32_t RequestedDefaultVoiceIndex = -1;
   VoiceProperty **VoiceProperties = nullptr;
 };
 

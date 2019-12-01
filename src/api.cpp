@@ -618,3 +618,36 @@ void __stdcall GetVoiceLanguageLength(int32_t *code, int32_t index,
   *languageLength = static_cast<int32_t>(
       wcslen(voiceInfoCtx->VoiceProperties[index]->Language));
 }
+
+void __stdcall GetDefaultVoice(int32_t *code, int32_t *index) {
+  if (code == nullptr) {
+    return;
+  }
+
+  *code = 0;
+
+  if (voiceInfoCtx == nullptr) {
+    *code = -1;
+    return;
+  }
+  *index = voiceInfoCtx->DefaultVoiceIndex;
+}
+
+void __stdcall SetDefaultVoice(int32_t *code, int32_t index) {
+  if (code == nullptr) {
+    return;
+  }
+
+  *code = 0;
+
+  if (voiceInfoCtx == nullptr) {
+    *code = -1;
+    return;
+  }
+  if (index < 0 || index > voiceInfoCtx->Count) {
+    *code = -2;
+    return;
+  }
+
+  voiceInfoCtx->RequestedDefaultVoiceIndex = index;
+}
