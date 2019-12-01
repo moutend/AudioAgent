@@ -14,31 +14,50 @@ import (
 	"unsafe"
 )
 
-type Command struct {
+type rawCommand struct {
 	Type         int16
 	SoundIndex   int16
 	WaitDuration float64
+	TextLen      int32
+	TextPtr      uintptr
 	SSMLLen      int32
 	SSMLPtr      uintptr
 }
 
+type command struct {
+	Type  int16       `json:"type"`
+	Value interface{} `json:"value"`
+}
+
+type postCommandRequest struct {
+	Commands []command `json:"commands"`
+}
+
 type postDefaultVoiceRequest struct {
-	Index int `json:"index"`
+	Index int32 `json:"index"`
 }
 
-type getVoicesResponse struct {
-	DefaultVoiceIndex int             `json:"defaultVoiceIndex"`
-	VoiceProperties   []VoiceProperty `json:"voiceProperties"`
-}
-
-type VoiceProperty struct {
+type voiceProperty struct {
 	Id          string `json:"id"`
 	DisplayName string `json:"displayName"`
 	Language    string `json:"language"`
 }
 
+type getVoicesResponse struct {
+	DefaultVoiceIndex int32           `json:"defaultVoiceIndex"`
+	VoiceProperties   []voiceProperty `json:"voiceProperties"`
+}
+
+const (
+	enumPlay = 1
+	enumWait = 2
+	enumText = 3
+	enumSSML = 4
+)
+
 var (
-	dll = syscall.NewLazyDLL("AudioNode.dll")
+	logPath = ""
+	dll     = syscall.NewLazyDLL("AudioNode.dll")
 
 	procStart                     = dll.NewProc("Start")
 	procQuit                      = dll.NewProc("Quit")
@@ -57,7 +76,11 @@ var (
 )
 
 func fadeInHandler(w http.ResponseWriter, r *http.Request) {
-	code := int32(0)
+	if r.Method != "GET" {
+		return
+	}
+
+	var code int32
 
 	procFadeIn.Call(uintptr(unsafe.Pointer(&code)))
 
@@ -67,7 +90,11 @@ func fadeInHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func fadeOutHandler(w http.ResponseWriter, r *http.Request) {
-	code := int32(0)
+	if r.Method != "GET" {
+		return
+	}
+
+	var code int32
 
 	procFadeOut.Call(uintptr(unsafe.Pointer(&code)))
 
@@ -76,55 +103,92 @@ func fadeOutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func feedHandler(w http.ResponseWriter, r *http.Request) {
+func commandHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		return
+	}
+
 	buf := &bytes.Buffer{}
-	if _, err := io.Copy(buf, r.Body); err != nil {
-		fmt.Printf("error while reading request body (%v)\n", err)
-	}
-	tts := buf.String()
-	if tts == "" {
-		tts = "placeholder"
-	}
-	ssml := fmt.Sprintf("<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>%s</speak>", tts)
 
-	text, err := syscall.UTF16FromString(ssml)
-	if err != nil {
-		log.Println(err)
+	if n, err := io.Copy(buf, r.Body); err != nil || n == 0 {
+		log.Fatalf("Failed to read request body")
 	}
 
-	textPtr, err := syscall.UTF16PtrFromString(ssml)
-	if err != nil {
-		log.Println(err)
+	var req postCommandRequest
+
+	if err := json.Unmarshal(buf.Bytes(), &req); err != nil {
+		log.Fatal("Failed to execute json.Unmarshal()")
 	}
 
-	textLength := int32(len(text))
+	rawCommands := make([]uintptr, len(req.Commands), len(req.Commands))
 
-	code := int32(0)
+	for i, v := range req.Commands {
+		c := rawCommand{
+			Type: v.Type,
+		}
+		switch v.Type {
+		case enumText:
+			text := v.Value.(string)
+			textU16, err := syscall.UTF16FromString(text)
 
-	cmds := make([]uintptr, 2, 2)
+			if err != nil {
+				log.Fatal(err)
+				continue
+			}
 
-	cmd1 := Command{
-		Type:       1,
-		SoundIndex: 0,
+			textU16Ptr, err := syscall.UTF16PtrFromString(text)
+
+			if err != nil {
+				log.Fatal(err)
+				continue
+			}
+
+			c.TextPtr = uintptr(unsafe.Pointer(textU16Ptr))
+			c.TextLen = int32(len(textU16))
+		case enumSSML:
+			ssml := v.Value.(string)
+			ssmlU16, err := syscall.UTF16FromString(ssml)
+
+			if err != nil {
+				log.Fatal(err)
+				continue
+			}
+
+			ssmlU16Ptr, err := syscall.UTF16PtrFromString(ssml)
+
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			c.SSMLPtr = uintptr(unsafe.Pointer(ssmlU16Ptr))
+			c.SSMLLen = int32(len(ssmlU16))
+		case enumWait:
+			c.WaitDuration = v.Value.(float64)
+		case enumPlay:
+			c.SoundIndex = v.Value.(int16)
+		default:
+		}
+
+		rawCommands[i] = uintptr(unsafe.Pointer(&c))
 	}
-	cmds[0] = uintptr(unsafe.Pointer(&cmd1))
 
-	cmd2 := Command{
-		Type:    3,
-		SSMLPtr: uintptr(unsafe.Pointer(textPtr)),
-		SSMLLen: textLength,
+	var code int32
+
+	if len(rawCommands) > 0 {
+		procFeed.Call(uintptr(unsafe.Pointer(&code)), uintptr(unsafe.Pointer(&rawCommands[0])), uintptr(len(rawCommands)))
 	}
-	cmds[1] = uintptr(unsafe.Pointer(&cmd2))
-	procFeed.Call(uintptr(unsafe.Pointer(&code)), uintptr(unsafe.Pointer(&cmds[0])), uintptr(2))
-
 	if code != 0 {
 		log.Printf("Failed to call Feed() code=%d", code)
 	}
 }
 
 func voicesHandler(w http.ResponseWriter, r *http.Request) {
-	code := int32(0)
-	numberOfVoices := int32(0)
+	if r.Method != "GET" {
+		return
+	}
+
+	var code int32
+	var numberOfVoices int32
 
 	procGetVoiceCount.Call(uintptr(unsafe.Pointer(&code)), uintptr(unsafe.Pointer(&numberOfVoices)))
 
@@ -132,14 +196,15 @@ func voicesHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Failed to call GetVoiceCount() code=%d", code)
 	}
 
-	defaultVoiceIndex := int32(0)
+	var defaultVoiceIndex int32
+
 	procGetDefaultVoice.Call(uintptr(unsafe.Pointer(&code)), uintptr(unsafe.Pointer(&defaultVoiceIndex)))
 
 	if code != 0 {
 		log.Printf("Failed to call GetDefaultVoice() code=%d", code)
 	}
 
-	voiceProperties := []VoiceProperty{}
+	voiceProperties := []voiceProperty{}
 
 	for i := int32(0); i < numberOfVoices; i++ {
 		idLength := int32(0)
@@ -196,7 +261,7 @@ func voicesHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		voiceProperties = append(voiceProperties, VoiceProperty{
+		voiceProperties = append(voiceProperties, voiceProperty{
 			Id:          syscall.UTF16ToString(id),
 			DisplayName: syscall.UTF16ToString(displayName),
 			Language:    syscall.UTF16ToString(language),
@@ -204,69 +269,55 @@ func voicesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data, err := json.Marshal(getVoicesResponse{
-		DefaultVoiceIndex: int(defaultVoiceIndex),
+		DefaultVoiceIndex: defaultVoiceIndex,
 		VoiceProperties:   voiceProperties,
 	})
+
 	if err != nil {
 		log.Fatal("failed to call json.Marshal()")
-		return
 	}
 
 	io.Copy(w, bytes.NewBuffer(data))
 }
 
 func voiceHandler(w http.ResponseWriter, r *http.Request) {
-	req := postDefaultVoiceRequest{}
+	if r.Method != "POST" {
+		return
+	}
+
 	buf := &bytes.Buffer{}
-	io.Copy(buf, r.Body)
 
-	err := json.Unmarshal(buf.Bytes(), &req)
+	if n, err := io.Copy(buf, r.Body); err != nil || n == 0 {
+		log.Fatal(err)
+	}
 
-	if err != nil {
+	var req postDefaultVoiceRequest
+
+	if err := json.Unmarshal(buf.Bytes(), &req); err != nil {
 		log.Fatal("Failed to call json.Unmarshal()")
 		return
 	}
 
-	code := int32(0)
-	index := int32(req.Index)
-	procSetDefaultVoice.Call(uintptr(unsafe.Pointer(&code)), uintptr(index))
+	var code int32
+
+	procSetDefaultVoice.Call(uintptr(unsafe.Pointer(&code)), uintptr(req.Index))
 
 	if code != 0 {
 		log.Printf("Failed to call SetDefaultVoice() code=%d", code)
 	}
 }
 
-func setDefaultVoiceHandler(w http.ResponseWriter, r *http.Request) {
-	code := int32(0)
-	index := int32(0)
-	procSetDefaultVoice.Call(uintptr(unsafe.Pointer(&code)), uintptr(index))
-
-	if code != 0 {
-		log.Printf("Failed to call SetDefaultVoiceIndex() code=%d", code)
-	}
-}
-
 func startHandler(w http.ResponseWriter, r *http.Request) {
-	u, err := user.Current()
+	fullLogPath := filepath.Join(logPath, "AudioNode.ltsv")
+	fullLogPathU16ptr, err := syscall.UTF16PtrFromString(fullLogPath)
 
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 	}
 
-	fullLogPath := filepath.Join(u.HomeDir, "AppData", "Roaming", "YetAnotherNarrater", "Log", "AudioAgent.ltsv")
+	var code int32
 
-	os.MkdirAll(filepath.Dir(fullLogPath), 0755)
-
-	fmt.Println(fullLogPath)
-	u16ptr, err := syscall.UTF16PtrFromString(fullLogPath)
-
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	code := int32(0)
-
-	procStart.Call(uintptr(unsafe.Pointer(&code)), uintptr(unsafe.Pointer(u16ptr)), uintptr(0))
+	procStart.Call(uintptr(unsafe.Pointer(&code)), uintptr(unsafe.Pointer(fullLogPathU16ptr)), uintptr(0))
 
 	if code != 0 {
 		log.Printf("Failed to call Start()")
@@ -274,7 +325,7 @@ func startHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func quitHandler(w http.ResponseWriter, r *http.Request) {
-	code := int32(0)
+	var code int32
 
 	procQuit.Call(uintptr(unsafe.Pointer(&code)))
 
@@ -284,13 +335,24 @@ func quitHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	u, err := user.Current()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	logPath = filepath.Join(u.HomeDir, "AppData", "Roaming", "YetAnotherNarrater", "Log")
+	os.MkdirAll(logPath, 0755)
+
+	fmt.Println(logPath)
+
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/v1/engine/fadein", fadeInHandler)
 	mux.HandleFunc("/v1/engine/fadeout", fadeOutHandler)
-	mux.HandleFunc("/v1/engine/feed", feedHandler)
+	mux.HandleFunc("/v1/engine/command", commandHandler)
+	mux.HandleFunc("/v1/engine/voice", voiceHandler)
 	mux.HandleFunc("/v1/engine/voices", voicesHandler)
-	mux.HandleFunc("/v1/engine/voice", voicesHandler)
 	mux.HandleFunc("/v1/engine/start", startHandler)
 	mux.HandleFunc("/v1/engine/quit", quitHandler)
 
