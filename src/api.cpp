@@ -12,6 +12,7 @@
 #include "logloop.h"
 #include "soundloop.h"
 #include "util.h"
+#include "voiceinfo.h"
 #include "voiceloop.h"
 
 extern Logger::Logger *Log;
@@ -21,6 +22,7 @@ std::mutex apiMutex;
 
 LogLoopContext *logLoopCtx{nullptr};
 CommandLoopContext *commandLoopCtx{nullptr};
+VoiceInfoContext *voiceInfoCtx{nullptr};
 VoiceLoopContext *voiceLoopCtx{nullptr};
 SoundLoopContext *soundLoopCtx{nullptr};
 AudioLoopContext *voiceRenderCtx{nullptr};
@@ -28,6 +30,7 @@ AudioLoopContext *soundRenderCtx{nullptr};
 
 HANDLE logLoopThread{nullptr};
 HANDLE commandLoopThread{nullptr};
+HANDLE voiceInfoThread{nullptr};
 HANDLE voiceLoopThread{nullptr};
 HANDLE soundLoopThread{nullptr};
 HANDLE voiceRenderThread{nullptr};
@@ -269,12 +272,30 @@ void __stdcall Start(int32_t *code, const wchar_t *logPath, int32_t logLevel) {
     return;
   }
 
-  isActive = true;
+  voiceInfoCtx = new VoiceInfoContext();
+}
+Log->Info(L"Create voice info thread", GetCurrentThreadId(), __LINE__,
+          __WFILE__);
+
+voiceInfoThread = CreateThread(nullptr, 0, voiceInfo,
+                               static_cast<void *>(voiceInfoCtx), 0, nullptr);
+
+if (voiceInfoThread == nullptr) {
+  Log->Fail(L"Failed to create voice info thread", GetCurrentThreadId(),
+            __LINE__, __WFILE__);
+  *code = -17;
+  return;
+}
+
+isActive = true;
 }
 
 void __stdcall Quit(int32_t *code) {
   std::lock_guard<std::mutex> lock(apiMutex);
 
+  if (code == nullptr) {
+    return;
+  }
   if (!isActive) {
     *code = -1;
     return;
@@ -390,6 +411,9 @@ void __stdcall Quit(int32_t *code) {
 void __stdcall FadeIn(int32_t *code) {
   std::lock_guard<std::mutex> lock(apiMutex);
 
+  if (code == nullptr) {
+    return;
+  }
   if (!isActive) {
     *code = -1;
     return;
@@ -402,6 +426,9 @@ void __stdcall FadeIn(int32_t *code) {
 void __stdcall FadeOut(int32_t *code) {
   std::lock_guard<std::mutex> lock(apiMutex);
 
+  if (code == nullptr) {
+    return;
+  }
   if (!isActive) {
     *code = -1;
     return;
@@ -415,6 +442,9 @@ void __stdcall Feed(int32_t *code, Command **commandsPtr,
                     int32_t commandsLength) {
   std::lock_guard<std::mutex> lock(apiMutex);
 
+  if (code == nullptr) {
+    return;
+  }
   if (!isActive) {
     *code = -1;
     return;
@@ -476,42 +506,113 @@ void __stdcall GetVoiceCount(int32_t *code, int32_t *numberOfVoices) {
     *code = -1;
     return;
   }
-  if (voiceLoopCtx == nullptr) {
+  if (voiceInfoCtx == nullptr) {
     *code = -2;
     return;
   }
 
-  *numberOfVoices = voiceLoopCtx->VoiceCount;
+  *numberOfVoices = voiceInfoCtx->Count;
 }
 
-void __stdcall GetVoiceName(int32_t *code, int32_t index, wchar_t *voiceName) {
+void __stdcall GetVoiceDisplayName(int32_t *code, int32_t index,
+                                   wchar_t *displayName) {
   if (code == nullptr) {
     return;
   }
 
   *code = 0;
 
-  if (voiceLoopCtx == nullptr) {
+  if (voiceInfoCtx == nullptr) {
     *code = -1;
     return;
   }
 
-  size_t voiceNameLen = wcslen(voiceLoopCtx->Voices[index]);
-  std::wmemcpy(voiceName, voiceLoopCtx->Voices[index], voiceNameLen);
+  size_t displayNameLength =
+      wcslen(voiceInfoCtx->VoiceProperties[index]->DisplayName);
+  std::wmemcpy(displayName, voiceInfoCtx->VoiceProperties[index]->DisplayName,
+               displayNameLength);
 }
 
-void __stdcall GetVoiceNameLength(int32_t *code, int32_t index,
-                                  int32_t *voiceNameLength) {
+void __stdcall GetVoiceDisplayNameLength(int32_t *code, int32_t index,
+                                         int32_t *displayNameLength) {
   if (code == nullptr) {
     return;
   }
 
   *code = 0;
 
-  if (voiceLoopCtx == nullptr) {
+  if (voiceInfoCtx == nullptr) {
     *code = -1;
     return;
   }
 
-  *voiceNameLength = wcslen(voiceLoopCtx->Voices[index]);
+  *displayNameLength =
+      wcslen(voiceInfoCtx->VoiceProperties[index]->DisplayName);
+}
+
+void __stdcall GetVoiceId(int32_t *code, int32_t index, wchar_t *id) {
+  if (code == nullptr) {
+    return;
+  }
+
+  *code = 0;
+
+  if (voiceInfoCtx == nullptr) {
+    *code = -1;
+    return;
+  }
+
+  size_t idLength = wcslen(voiceInfoCtx->VoiceProperties[index]->Id);
+  std::wmemcpy(id, voiceInfoCtx->VoiceProperties[index]->Id, idLength);
+}
+
+void __stdcall GetVoiceIdLength(int32_t *code, int32_t index,
+                                int32_t *idLength) {
+  if (code == nullptr) {
+    return;
+  }
+
+  *code = 0;
+
+  if (voiceInfoCtx == nullptr) {
+    *code = -1;
+    return;
+  }
+
+  *idLength = wcslen(voiceInfoCtx->VoiceProperties[index]->Id);
+}
+
+void __stdcall GetVoiceLanguage(int32_t *code, int32_t index,
+                                wchar_t *language) {
+  if (code == nullptr) {
+    return;
+  }
+
+  *code = 0;
+
+  if (voiceInfoCtx == nullptr) {
+    *code = -1;
+    return;
+  }
+
+  size_t languageLength =
+      wcslen(voiceInfoCtx->VoiceProperties[index]->Language);
+  std::wmemcpy(language, voiceInfoCtx->VoiceProperties[index]->Language,
+               languageLength);
+}
+
+void __stdcall GetVoiceLanguageLength(int32_t *code, int32_t index,
+                                      int32_t *languageLength) {
+  if (code == nullptr) {
+    return;
+  }
+
+  *code = 0;
+
+  if (voiceInfoCtx == nullptr) {
+    *code = -1;
+    return;
+  }
+
+  *languageLength = wcslen(voiceInfoCtx->VoiceProperties[index]->Language);
 }

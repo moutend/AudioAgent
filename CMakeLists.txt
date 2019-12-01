@@ -25,6 +25,8 @@ set(
   src/commandloop.h
   src/voiceloop.cpp
   src/voiceloop.h
+  src/voiceinfo.cpp
+  src/voiceinfo.h
   src/soundloop.cpp
   src/soundloop.h
   src/audioloop.cpp

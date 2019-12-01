@@ -10,6 +10,17 @@ struct LogLoopContext {
   const wchar_t *FullLogPath = nullptr;
 };
 
+struct VoiceProperty {
+  wchar_t *Id = nullptr;
+  wchar_t *DisplayName = nullptr;
+  wchar_t *Language = nullptr;
+};
+
+struct VoiceInfoContext {
+  unsigned int Count = 0;
+  VoiceProperties *VoiceProperty = nullptr;
+};
+
 struct VoiceLoopContext {
   HANDLE FeedEvent = nullptr;
   HANDLE NextEvent = nullptr;
