@@ -38,7 +38,7 @@ DWORD WINAPI voiceInfo(LPVOID context) {
   ctx->Count = synth->AllVoices->Size;
   ctx->VoiceProperties = new VoiceProperty *[synth->AllVoices->Size];
 
-  VoiceInformation ^ defaultInfo = synth->Voice;
+  VoiceInformation ^ defaultInfo = synth->DefaultVoice;
   int32_t defaultVoiceIndex{};
 
   for (unsigned int i = 0; i < ctx->Count; ++i) {
