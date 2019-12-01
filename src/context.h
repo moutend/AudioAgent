@@ -18,7 +18,7 @@ struct VoiceProperty {
 
 struct VoiceInfoContext {
   unsigned int Count = 0;
-  VoiceProperties *VoiceProperty = nullptr;
+  VoiceProperty *VoiceProperties = nullptr;
 };
 
 struct VoiceLoopContext {
