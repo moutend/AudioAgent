@@ -1,6 +1,5 @@
 #include <cpplogger.h>
 #include <cstring>
-#include <engine.h>
 #include <ppltasks.h>
 #include <roapi.h>
 #include <robuffer.h>
@@ -8,7 +7,7 @@
 
 #include "context.h"
 #include "util.h"
-#include "voiceloop.h"
+#include "voiceinfo.h"
 
 using namespace Microsoft::WRL;
 using namespace Windows::Media::SpeechSynthesis;
