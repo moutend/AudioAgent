@@ -22,8 +22,13 @@ type Command struct {
 	SSMLPtr      uintptr
 }
 
-type VoicesResponse struct {
-	VoiceProperties []VoiceProperty `json:"voiceProperties"`
+type postDefaultVoiceRequest struct {
+	Index int `json:"index"`
+}
+
+type getVoicesResponse struct {
+	DefaultVoiceIndex int             `json:"defaultVoiceIndex"`
+	VoiceProperties   []VoiceProperty `json:"voiceProperties"`
 }
 
 type VoiceProperty struct {
@@ -47,6 +52,8 @@ var (
 	procGetVoiceDisplayNameLength = dll.NewProc("GetVoiceDisplayNameLength")
 	procGetVoiceLanguage          = dll.NewProc("GetVoiceLanguage")
 	procGetVoiceLanguageLength    = dll.NewProc("GetVoiceLanguageLength")
+	procGetDefaultVoice           = dll.NewProc("GetDefaultVoice")
+	procSetDefaultVoice           = dll.NewProc("SetDefaultVoice")
 )
 
 func fadeInHandler(w http.ResponseWriter, r *http.Request) {
@@ -125,6 +132,13 @@ func voicesHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Failed to call GetVoiceCount() code=%d", code)
 	}
 
+	defaultVoiceIndex := int32(0)
+	procGetDefaultVoice.Call(uintptr(unsafe.Pointer(&code)), uintptr(unsafe.Pointer(&defaultVoiceIndex)))
+
+	if code != 0 {
+		log.Printf("Failed to call GetDefaultVoice() code=%d", code)
+	}
+
 	voiceProperties := []VoiceProperty{}
 
 	for i := int32(0); i < numberOfVoices; i++ {
@@ -189,8 +203,9 @@ func voicesHandler(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	data, err := json.Marshal(VoicesResponse{
-		VoiceProperties: voiceProperties,
+	data, err := json.Marshal(getVoicesResponse{
+		DefaultVoiceIndex: int(defaultVoiceIndex),
+		VoiceProperties:   voiceProperties,
 	})
 	if err != nil {
 		log.Fatal("failed to call json.Marshal()")
@@ -198,6 +213,37 @@ func voicesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	io.Copy(w, bytes.NewBuffer(data))
+}
+
+func voiceHandler(w http.ResponseWriter, r *http.Request) {
+	req := postDefaultVoiceRequest{}
+	buf := &bytes.Buffer{}
+	io.Copy(buf, r.Body)
+
+	err := json.Unmarshal(buf.Bytes(), &req)
+
+	if err != nil {
+		log.Fatal("Failed to call json.Unmarshal()")
+		return
+	}
+
+	code := int32(0)
+	index := int32(req.Index)
+	procSetDefaultVoice.Call(uintptr(unsafe.Pointer(&code)), uintptr(index))
+
+	if code != 0 {
+		log.Printf("Failed to call SetDefaultVoice() code=%d", code)
+	}
+}
+
+func setDefaultVoiceHandler(w http.ResponseWriter, r *http.Request) {
+	code := int32(0)
+	index := int32(0)
+	procSetDefaultVoice.Call(uintptr(unsafe.Pointer(&code)), uintptr(index))
+
+	if code != 0 {
+		log.Printf("Failed to call SetDefaultVoiceIndex() code=%d", code)
+	}
 }
 
 func startHandler(w http.ResponseWriter, r *http.Request) {
@@ -244,6 +290,7 @@ func main() {
 	mux.HandleFunc("/v1/engine/fadeout", fadeOutHandler)
 	mux.HandleFunc("/v1/engine/feed", feedHandler)
 	mux.HandleFunc("/v1/engine/voices", voicesHandler)
+	mux.HandleFunc("/v1/engine/voices/default", voicesHandler)
 	mux.HandleFunc("/v1/engine/start", startHandler)
 	mux.HandleFunc("/v1/engine/quit", quitHandler)
 
