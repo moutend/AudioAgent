@@ -273,21 +273,21 @@ void __stdcall Start(int32_t *code, const wchar_t *logPath, int32_t logLevel) {
   }
 
   voiceInfoCtx = new VoiceInfoContext();
-}
-Log->Info(L"Create voice info thread", GetCurrentThreadId(), __LINE__,
-          __WFILE__);
 
-voiceInfoThread = CreateThread(nullptr, 0, voiceInfo,
-                               static_cast<void *>(voiceInfoCtx), 0, nullptr);
+  Log->Info(L"Create voice info thread", GetCurrentThreadId(), __LINE__,
+            __WFILE__);
 
-if (voiceInfoThread == nullptr) {
-  Log->Fail(L"Failed to create voice info thread", GetCurrentThreadId(),
-            __LINE__, __WFILE__);
-  *code = -17;
-  return;
-}
+  voiceInfoThread = CreateThread(nullptr, 0, voiceInfo,
+                                 static_cast<void *>(voiceInfoCtx), 0, nullptr);
 
-isActive = true;
+  if (voiceInfoThread == nullptr) {
+    Log->Fail(L"Failed to create voice info thread", GetCurrentThreadId(),
+              __LINE__, __WFILE__);
+    *code = -17;
+    return;
+  }
+
+  isActive = true;
 }
 
 void __stdcall Quit(int32_t *code) {
