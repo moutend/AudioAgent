@@ -632,6 +632,11 @@ void __stdcall GetDefaultVoice(int32_t *code, int32_t *index) {
     *code = -1;
     return;
   }
+  if (index == nullptr) {
+    *code = -2;
+    return;
+  }
+
   *index = voiceInfoCtx->DefaultVoiceIndex;
 }
 
