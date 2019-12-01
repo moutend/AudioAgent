@@ -546,8 +546,8 @@ void __stdcall GetVoiceDisplayNameLength(int32_t *code, int32_t index,
     return;
   }
 
-  *displayNameLength =
-      wcslen(voiceInfoCtx->VoiceProperties[index]->DisplayName);
+  *displayNameLength = static_cast<int32_t>(
+      wcslen(voiceInfoCtx->VoiceProperties[index]->DisplayName));
 }
 
 void __stdcall GetVoiceId(int32_t *code, int32_t index, wchar_t *id) {
@@ -562,7 +562,8 @@ void __stdcall GetVoiceId(int32_t *code, int32_t index, wchar_t *id) {
     return;
   }
 
-  size_t idLength = wcslen(voiceInfoCtx->VoiceProperties[index]->Id);
+  size_t idLength =
+      static_cast<int32_t>(wcslen(voiceInfoCtx->VoiceProperties[index]->Id));
   std::wmemcpy(id, voiceInfoCtx->VoiceProperties[index]->Id, idLength);
 }
 
@@ -614,5 +615,6 @@ void __stdcall GetVoiceLanguageLength(int32_t *code, int32_t index,
     return;
   }
 
-  *languageLength = wcslen(voiceInfoCtx->VoiceProperties[index]->Language);
+  *languageLength = static_cast<int32_t>(
+      wcslen(voiceInfoCtx->VoiceProperties[index]->Language));
 }
