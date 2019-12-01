@@ -35,10 +35,10 @@ DWORD WINAPI voiceInfo(LPVOID context) {
 
   auto synth = ref new SpeechSynthesizer();
 
-  ctx->VoiceCount = synth->AllVoices->Size;
+  ctx->Count = synth->AllVoices->Size;
   ctx->VoiceProperties = new VoiceProperty *[synth->AllVoices->Size];
 
-  for (unsigned int i = 0; i < ctx->VoiceCount; ++i) {
+  for (unsigned int i = 0; i < ctx->Count; ++i) {
     VoiceInformation ^ info = synth->AllVoices->GetAt(i);
 
     ctx->VoiceProperties[i] = new VoiceProperty();
