@@ -117,7 +117,7 @@ func voicesHandler(w http.ResponseWriter, r *http.Request) {
 	for i := int32(0); i < numberOfVoices; i++ {
 		procGetVoiceNameLength.Call(uintptr(unsafe.Pointer(&code)), uintptr(i), uintptr(unsafe.Pointer(&voiceNameLength)))
 
-		if code == 0 {
+		if code != 0 {
 			log.Printf("Failed to call GetVoiceNameLength() code=%d", code)
 			continue
 		}
@@ -134,7 +134,7 @@ func voicesHandler(w http.ResponseWriter, r *http.Request) {
 		voiceNames = append(voiceNames, syscall.UTF16ToString(voiceName))
 	}
 	data, err := json.Marshal(struct {
-		Voices []string
+		Voices []string `json:"voices"`
 	}{
 		Voices: voiceNames,
 	})
