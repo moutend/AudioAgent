@@ -167,7 +167,7 @@ func commandHandler(w http.ResponseWriter, r *http.Request) {
 		case enumWait:
 			c.WaitDuration = v.Value.(float64)
 		case enumPlay:
-			c.SoundIndex = v.Value.(int16)
+			c.SoundIndex = int16(v.Value.(float64))
 		default:
 		}
 
@@ -337,7 +337,7 @@ func quitHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	file, err := os.Open("log.txt")
+	file, err := os.Create("log.txt")
 
 	if err != nil {
 		panic(err)
