@@ -294,9 +294,9 @@ func voiceHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req postDefaultVoiceRequest
-
+	logger.Printf("%s\n", buf.Bytes())
 	if err := json.Unmarshal(buf.Bytes(), &req); err != nil {
-		logger.Fatal("Failed to call json.Unmarshal()")
+		logger.Fatal(err)
 		return
 	}
 

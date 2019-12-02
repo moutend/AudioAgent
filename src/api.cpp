@@ -637,7 +637,7 @@ void __stdcall GetDefaultVoice(int32_t *code, int32_t *index) {
     return;
   }
 
-  *index = voiceInfoCtx->DefaultVoiceIndex;
+  *index = voiceInfoCtx->RequestedDefaultVoiceIndex;
 }
 
 void __stdcall SetDefaultVoice(int32_t *code, int32_t index) {
