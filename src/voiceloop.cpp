@@ -67,27 +67,39 @@ DWORD WINAPI voiceLoop(LPVOID context) {
     }
 
     task<SpeechSynthesisStream ^> speechTask;
-    Platform::String ^ ssml = ref new Platform::String(ctx->BufferPtr);
 
-    try {
-      speechTask = create_task(synth->SynthesizeSsmlToStreamAsync(ssml));
-    } catch (Platform::Exception ^ e) {
-      Log->Warn(L"Failed to call SynthesizeSsmlToStreamAsync",
-                GetCurrentThreadId(), __LINE__, __WFILE__);
-      continue;
+    if (ctx->IsSSML) {
+      try {
+        Platform::String ^ ssml = ref new Platform::String(ctx->BufferPtr);
+        speechTask = create_task(synth->SynthesizeSsmlToStreamAsync(ssml));
+      } catch (Platform::Exception ^ e) {
+        Log->Warn(L"Failed to call SynthesizeSsmlToStreamAsync",
+                  GetCurrentThreadId(), __LINE__, __WFILE__);
+        continue;
+      }
+
+      // Broken SSML string (e.g. unbalanced brackets) makes the task done.
+
+      if (speechTask.is_done()) {
+        Log->Warn(
+            L"Failed to continue speech synthesis (probably SSML is broken)",
+            GetCurrentThreadId(), __LINE__, __WFILE__);
+        continue;
+      }
+    } else {
+      try {
+        Platform::String ^ text = ref new Platform::String(ctx->BufferPtr);
+        speechTask = create_task(synth->SynthesizeTextToStreamAsync(text));
+      } catch (Platform::Exception ^ e) {
+        Log->Warn(L"Failed to call SynthesizeTextToStreamAsync",
+                  GetCurrentThreadId(), __LINE__, __WFILE__);
+        continue;
+      }
     }
 
-    // I don't know why, but the broken SSML makes the task done.
+    // The generated voice format is RIFF PCM wave, int32_t is enough to hold
+    // that data.
 
-    if (speechTask.is_done()) {
-      Log->Warn(
-          L"Failed to continue speech synthesis (probably SSML is broken)",
-          GetCurrentThreadId(), __LINE__, __WFILE__);
-      continue;
-    }
-
-    // The voice is generated as WAVE file format, int32_t type is enough to
-    // holding the byte array length.
     int32_t waveLength{0};
 
     speechTask

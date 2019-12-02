@@ -27,6 +27,7 @@ struct VoiceLoopContext {
   HANDLE FeedEvent = nullptr;
   HANDLE NextEvent = nullptr;
   HANDLE QuitEvent = nullptr;
+  bool IsSSML = false;
   wchar_t *BufferPtr = nullptr;
   int32_t BufferLen = 0;
   PCMAudio::RingEngine *VoiceEngine = nullptr;

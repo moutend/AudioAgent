@@ -63,6 +63,21 @@ DWORD WINAPI commandLoop(LPVOID context) {
     case 2:
       break;
     case 3:
+      ctx->VoiceLoopCtx->IsSSML = false;
+      ctx->VoiceLoopCtx->BufferPtr = cmd->SSMLPtr;
+      ctx->VoiceLoopCtx->BufferLen = cmd->SSMLLen;
+
+      Log->Info(L"Send event (ctx->VoiceLoopCtx->FeedEvent)",
+                GetCurrentThreadId(), __LINE__, __WFILE__);
+
+      if (!SetEvent(ctx->VoiceLoopCtx->FeedEvent)) {
+        Log->Fail(L"Failed to set feed event for voice loop",
+                  GetCurrentThreadId(), __LINE__, __WFILE__);
+      }
+
+      break;
+    case 4:
+      ctx->VoiceLoopCtx->IsSSML = true;
       ctx->VoiceLoopCtx->BufferPtr = cmd->SSMLPtr;
       ctx->VoiceLoopCtx->BufferLen = cmd->SSMLLen;
 
