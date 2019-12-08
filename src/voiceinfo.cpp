@@ -38,8 +38,8 @@ DWORD WINAPI voiceInfo(LPVOID context) {
   ctx->Count = synth->AllVoices->Size;
   ctx->VoiceProperties = new VoiceProperty *[synth->AllVoices->Size];
 
+  unsigned int defaultVoiceIndex{};
   VoiceInformation ^ defaultInfo = synth->DefaultVoice;
-  int32_t defaultVoiceIndex{};
 
   for (unsigned int i = 0; i < ctx->Count; ++i) {
     VoiceInformation ^ info = synth->AllVoices->GetAt(i);
@@ -66,7 +66,6 @@ DWORD WINAPI voiceInfo(LPVOID context) {
   }
 
   ctx->DefaultVoiceIndex = defaultVoiceIndex;
-  ctx->RequestedDefaultVoiceIndex = defaultVoiceIndex;
 
   RoUninitialize();
 

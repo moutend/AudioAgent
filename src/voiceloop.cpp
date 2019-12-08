@@ -37,24 +37,23 @@ DWORD WINAPI voiceLoop(LPVOID context) {
   bool isActive{true};
   auto synth = ref new SpeechSynthesizer();
 
-  if (ApiInformation::IsApiContractPresent(
-          "Windows.Foundation.UniversalApiContract", 6, 0)) {
-    auto options = synth->Options;
-    options->AppendedSilence = SpeechAppendedSilence::Min;
-  }
-
-  ctx->VoiceCount = synth->AllVoices->Size;
-  ctx->Voices = new wchar_t *[synth->AllVoices->Size];
-
-  for (unsigned int i = 0; i < ctx->VoiceCount; ++i) {
-    VoiceInformation ^ info = synth->AllVoices->GetAt(i);
-    size_t voiceNameLen = wcslen(info->Id->Data());
-    // Ensure null terminated
-    ctx->Voices[i] = new wchar_t[voiceNameLen + 1]{};
-
-    std::wmemcpy(ctx->Voices[i], info->Id->Data(), voiceNameLen);
-  }
   while (isActive) {
+    if (ctx->VoiceInfoCtx != nullptr) {
+unsigned int index = ctx->VoiceInfoCtx->DefaultVoiceIndex);
+
+synth->Voice = synth->AllVoices->GetAt(index);
+synth->Options->SpeakingRate =
+    ctx->VoiceInfoCtx->VoiceProperties[index]->SpeakingRate;
+synth->Options->AudioPitch =
+    ctx->VoiceInfoCtx->VoiceProperties[index]->AudioPitch;
+synth->Options->AudioVolume =
+    ctx->VoiceInfoCtx->VoiceProperties[index]->AudioVolume;
+    }
+    if (ApiInformation::IsApiContractPresent(
+            "Windows.Foundation.UniversalApiContract", 6, 0)) {
+      synth->options->AppendedSilence = SpeechAppendedSilence::Min;
+    }
+
     HANDLE waitArray[2] = {ctx->FeedEvent, ctx->QuitEvent};
     DWORD waitResult = WaitForMultipleObjects(2, waitArray, FALSE, INFINITE);
 
@@ -128,16 +127,8 @@ DWORD WINAPI voiceLoop(LPVOID context) {
           }
         })
         .wait();
-    if (ctx->VoiceInfoCtx != nullptr) {
-      synth->Voice = synth->AllVoices->GetAt(static_cast<unsigned int>(
-          ctx->VoiceInfoCtx->RequestedDefaultVoiceIndex));
-    }
-  }
-  for (unsigned int i = 0; i < ctx->VoiceCount; i++) {
-    delete[] ctx->Voices[i];
   }
 
-  delete[] ctx->Voices;
   RoUninitialize();
 
   Log->Info(L"End Voice loop thread", GetCurrentThreadId(), __LINE__,

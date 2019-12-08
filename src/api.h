@@ -34,4 +34,8 @@ export void __stdcall GetVoiceLanguageLength(int32_t *code, int32_t index,
                                              int32_t *languageLength);
 export void __stdcall GetDefaultVoice(int32_t *code, int32_t *index);
 export void __stdcall SetDefaultVoice(int32_t *code, int32_t index);
+export void __stdcall GetSpeakingRate(int32_t *code, int32_t index,
+                                      double *rate);
+export void __stdcall SetSpeakingRate(int32_t *code, int32_t index,
+                                      double rate);
 }

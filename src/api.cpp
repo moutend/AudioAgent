@@ -637,7 +637,7 @@ void __stdcall GetDefaultVoice(int32_t *code, int32_t *index) {
     return;
   }
 
-  *index = voiceInfoCtx->RequestedDefaultVoiceIndex;
+  *index = voiceInfoCtx->DefaultVoiceIndex;
 }
 
 void __stdcall SetDefaultVoice(int32_t *code, int32_t index) {
@@ -656,5 +656,47 @@ void __stdcall SetDefaultVoice(int32_t *code, int32_t index) {
     return;
   }
 
-  voiceInfoCtx->RequestedDefaultVoiceIndex = index;
+  voiceInfoCtx->DefaultVoiceIndex = index;
+}
+
+void __stdcall GetSpeakingRate(int32_t *code, int32_t index, double *rate) {
+  if (code == nullptr) {
+    return;
+  }
+
+  *code = 0;
+
+  if (voiceInfoCtx == nullptr) {
+    *code = -1;
+    return;
+  }
+  if (index < 0 || index > voiceInfoCtx->Count) {
+    *code = -2;
+    return;
+  }
+
+  *rate = voiceInfoCtx->VoiceProperties[index]->SpeakingRate;
+}
+
+void __stdcall SetSpeakingRate(int32_t *code, int32_t index, double rate) {
+  if (code == nullptr) {
+    return;
+  }
+
+  *code = 0;
+
+  if (voiceInfoCtx == nullptr) {
+    *code = -1;
+    return;
+  }
+  if (index < 0 || index > voiceInfoCtx->Count) {
+    *code = -2;
+    return;
+  }
+  if (voiceInfoCtx->VoiceProperties == nullptr) {
+    *code = -3;
+    return;
+  }
+
+  voiceInfoCtx->VoiceProperties[index]->SpeakingRate = rate;
 }

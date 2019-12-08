@@ -14,12 +14,14 @@ struct VoiceProperty {
   wchar_t *Id = nullptr;
   wchar_t *DisplayName = nullptr;
   wchar_t *Language = nullptr;
+  double SpeakingRate = 1.0;
+  double AudioVolume = 1.0;
+  double AudioPitch = 1.0;
 };
 
 struct VoiceInfoContext {
   unsigned int Count = 0;
-  int32_t DefaultVoiceIndex = -1;
-  int32_t RequestedDefaultVoiceIndex = -1;
+  unsigned int DefaultVoiceIndex = 0;
   VoiceProperty **VoiceProperties = nullptr;
 };
 
@@ -32,7 +34,6 @@ struct VoiceLoopContext {
   int32_t BufferLen = 0;
   PCMAudio::RingEngine *VoiceEngine = nullptr;
   unsigned int VoiceCount = 0;
-  wchar_t **Voices = nullptr;
   VoiceInfoContext *VoiceInfoCtx = nullptr;
 };
 
