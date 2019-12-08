@@ -38,6 +38,7 @@ DWORD WINAPI voiceLoop(LPVOID context) {
   auto synth = ref new SpeechSynthesizer();
 
   while (isActive) {
+  /*
     if (ctx->VoiceInfoCtx != nullptr) {
       unsigned int index = ctx->VoiceInfoCtx->DefaultVoiceIndex;
 
@@ -49,6 +50,7 @@ DWORD WINAPI voiceLoop(LPVOID context) {
       synth->Options->AudioVolume =
           ctx->VoiceInfoCtx->VoiceProperties[index]->AudioVolume;
     }
+    */
     if (ApiInformation::IsApiContractPresent(
             "Windows.Foundation.UniversalApiContract", 6, 0)) {
       synth->Options->AppendedSilence = SpeechAppendedSilence::Min;

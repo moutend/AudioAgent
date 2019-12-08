@@ -374,6 +374,6 @@ func main() {
 	if err := server.ListenAndServe(); err != nil {
 		panic(err)
 	}
-
+	fmt.Println("Shutting down")
 	defer server.Close()
 }
