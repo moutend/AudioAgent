@@ -39,19 +39,19 @@ DWORD WINAPI voiceLoop(LPVOID context) {
 
   while (isActive) {
     if (ctx->VoiceInfoCtx != nullptr) {
-unsigned int index = ctx->VoiceInfoCtx->DefaultVoiceIndex);
+      unsigned int index = ctx->VoiceInfoCtx->DefaultVoiceIndex);
 
-synth->Voice = synth->AllVoices->GetAt(index);
-synth->Options->SpeakingRate =
-    ctx->VoiceInfoCtx->VoiceProperties[index]->SpeakingRate;
-synth->Options->AudioPitch =
-    ctx->VoiceInfoCtx->VoiceProperties[index]->AudioPitch;
-synth->Options->AudioVolume =
-    ctx->VoiceInfoCtx->VoiceProperties[index]->AudioVolume;
+      synth->Voice = synth->AllVoices->GetAt(index);
+      synth->Options->SpeakingRate =
+          ctx->VoiceInfoCtx->VoiceProperties[index]->SpeakingRate;
+      synth->Options->AudioPitch =
+          ctx->VoiceInfoCtx->VoiceProperties[index]->AudioPitch;
+      synth->Options->AudioVolume =
+          ctx->VoiceInfoCtx->VoiceProperties[index]->AudioVolume;
     }
     if (ApiInformation::IsApiContractPresent(
             "Windows.Foundation.UniversalApiContract", 6, 0)) {
-      synth->options->AppendedSilence = SpeechAppendedSilence::Min;
+      synth->Options->AppendedSilence = SpeechAppendedSilence::Min;
     }
 
     HANDLE waitArray[2] = {ctx->FeedEvent, ctx->QuitEvent};
