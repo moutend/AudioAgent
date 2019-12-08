@@ -39,7 +39,7 @@ DWORD WINAPI voiceLoop(LPVOID context) {
 
   while (isActive) {
     if (ctx->VoiceInfoCtx != nullptr) {
-      unsigned int index = ctx->VoiceInfoCtx->DefaultVoiceIndex);
+      unsigned int index = ctx->VoiceInfoCtx->DefaultVoiceIndex;
 
       synth->Voice = synth->AllVoices->GetAt(index);
       synth->Options->SpeakingRate =
