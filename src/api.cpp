@@ -85,6 +85,13 @@ void __stdcall Start(int32_t *code, const wchar_t *logPath, int32_t logLevel) {
     return;
   }
 
+  WaitForSingleObject(voiceInfoThread, INFINITE);
+  CloseHandle(voiceInfoThread);
+  voiceInfoThread = nullptr;
+
+  Log->Info(L"Delete voice info thread", GetCurrentThreadId(), __LINE__,
+            __WFILE__);
+
   voiceEngine = new PCMAudio::RingEngine();
 
   nextVoiceEvent =
