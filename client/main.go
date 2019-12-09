@@ -49,6 +49,11 @@ type getVoicesResponse struct {
 	VoiceProperties   []voiceProperty `json:"voiceProperties"`
 }
 
+type postSpeakingRateRequest struct {
+	Index        int32   `json:"index"`
+	SpeakingRate float64 `json:"speakingRate"`
+}
+
 const (
 	enumPlay = 1
 	enumWait = 2
@@ -75,6 +80,8 @@ var (
 	procGetVoiceLanguageLength    = dll.NewProc("GetVoiceLanguageLength")
 	procGetDefaultVoice           = dll.NewProc("GetDefaultVoice")
 	procSetDefaultVoice           = dll.NewProc("SetDefaultVoice")
+	procGetSpeakingRate           = dll.NewProc("GetSpeakingRate")
+	procSetSpeakingRate           = dll.NewProc("SetSpeakingRate")
 )
 
 func fadeInHandler(w http.ResponseWriter, r *http.Request) {
@@ -309,6 +316,33 @@ func voiceHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func speakingRateHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		return
+	}
+
+	buf := &bytes.Buffer{}
+
+	if n, err := io.Copy(buf, r.Body); err != nil || n == 0 {
+		logger.Fatal(err)
+	}
+
+	var req postSpeakingRateRequest
+
+	if err := json.Unmarshal(buf.Bytes(), &req); err != nil {
+		logger.Fatal(err)
+		return
+	}
+
+	var code int32
+
+	procSetSpeakingRate.Call(uintptr(unsafe.Pointer(&code)), uintptr(req.Index), uintptr(req.SpeakingRate))
+
+	if code != 0 {
+		logger.Printf("Failed to call SetSpeakingRate() code=%d", code)
+	}
+}
+
 func startHandler(w http.ResponseWriter, r *http.Request) {
 	fullLogPath := filepath.Join(logPath, "AudioNode.ltsv")
 	fullLogPathU16ptr, err := syscall.UTF16PtrFromString(fullLogPath)
@@ -361,6 +395,7 @@ func main() {
 	mux.HandleFunc("/v1/engine/fadein", fadeInHandler)
 	mux.HandleFunc("/v1/engine/fadeout", fadeOutHandler)
 	mux.HandleFunc("/v1/engine/command", commandHandler)
+	mux.HandleFunc("/v1/engine/speakingRate", speakingRateHandler)
 	mux.HandleFunc("/v1/engine/voice", voiceHandler)
 	mux.HandleFunc("/v1/engine/voices", voicesHandler)
 	mux.HandleFunc("/v1/engine/start", startHandler)
@@ -374,6 +409,6 @@ func main() {
 	if err := server.ListenAndServe(); err != nil {
 		panic(err)
 	}
-	fmt.Println("Shutting down")
+	log.Println("Shutting down")
 	defer server.Close()
 }

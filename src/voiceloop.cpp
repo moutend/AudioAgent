@@ -45,6 +45,7 @@ DWORD WINAPI voiceLoop(LPVOID context) {
       synth->Voice = synth->AllVoices->GetAt(index);
       synth->Options->SpeakingRate =
           ctx->VoiceInfoCtx->VoiceProperties[index]->SpeakingRate;
+      synth->Options->SpeakingRate = 200.0;
       synth->Options->AudioPitch =
           ctx->VoiceInfoCtx->VoiceProperties[index]->AudioPitch;
       synth->Options->AudioVolume =
