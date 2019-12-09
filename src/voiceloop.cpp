@@ -38,6 +38,9 @@ DWORD WINAPI voiceLoop(LPVOID context) {
   auto synth = ref new SpeechSynthesizer();
 
   while (isActive) {
+    HANDLE waitArray[2] = {ctx->FeedEvent, ctx->QuitEvent};
+    DWORD waitResult = WaitForMultipleObjects(2, waitArray, FALSE, INFINITE);
+
     if (ctx->VoiceInfoCtx != nullptr &&
         ctx->VoiceInfoCtx->VoiceProperties != nullptr) {
       unsigned int index = ctx->VoiceInfoCtx->DefaultVoiceIndex;
@@ -54,10 +57,6 @@ DWORD WINAPI voiceLoop(LPVOID context) {
             "Windows.Foundation.UniversalApiContract", 6, 0)) {
       synth->Options->AppendedSilence = SpeechAppendedSilence::Min;
     }
-
-    HANDLE waitArray[2] = {ctx->FeedEvent, ctx->QuitEvent};
-    DWORD waitResult = WaitForMultipleObjects(2, waitArray, FALSE, INFINITE);
-
     switch (waitResult) {
     case WAIT_OBJECT_0 + 0: // ctx->FeedEvent
       break;
