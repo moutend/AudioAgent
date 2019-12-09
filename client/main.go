@@ -29,11 +29,16 @@ func main() {
 
 	fmt.Println(logPath)
 
-	mux := http.NewServeMux()
+	mux := NewMux()
 
-	mux.HandleFunc("/v1/audio", audioHandler)
-	mux.HandleFunc("/v1/voices", voicesHandler)
-	// mux.HandleFunc("/v1/sfx", sfxHandler)
+	mux.Post("/v1/audio/command", postAudioCommand)
+	mux.Get("/v1/audio/enable", getAudioEnable)
+	mux.Get("/v1/audio/disable", getAudioDisable)
+	mux.Get("/v1/audio/restart", getAudioRestart)
+	mux.Get("/v1/audio/pause", getAudioPause)
+
+	mux.Get("/v1/voices", getVoices)
+	mux.Put("/v1/voice", putVoice)
 
 	server := &http.Server{
 		Addr:    ":4000",

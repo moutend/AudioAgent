@@ -3,15 +3,13 @@ package main
 import (
 	"io/ioutil"
 	"log"
-	"mime"
 	"syscall"
 )
 
 var (
-	jsonContentType = mime.TypeByExtension(".json")
-	logger          = log.New(ioutil.Discard, "discard logging messages", log.LstdFlags)
-	logPath         = ""
-	dll             = syscall.NewLazyDLL("AudioNode.dll")
+	logger  = log.New(ioutil.Discard, "discard logging messages", log.LstdFlags)
+	logPath = ""
+	dll     = syscall.NewLazyDLL("AudioNode.dll")
 
 	procStart                     = dll.NewProc("Start")
 	procQuit                      = dll.NewProc("Quit")

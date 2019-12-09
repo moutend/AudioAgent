@@ -37,13 +37,13 @@ func main() {
 				fmt.Println("end")
 				return
 			case termbox.KeyArrowUp:
-				go http.Post("http://192.168.1.107:4000/v1/engine/fadein", contentType, nil)
+				go http.Get("http://192.168.1.107:4000/v1/audio/restart")
 			case termbox.KeyArrowDown:
-				go http.Post("http://192.168.1.107:4000/v1/engine/fadeout", contentType, nil)
+				go http.Get("http://192.168.1.107:4000/v1/audio/pause")
 			case termbox.KeyArrowLeft:
-				go http.Post("http://192.168.1.107:4000/v1/engine/start", contentType, nil)
+				go http.Get("http://192.168.1.107:4000/v1/audio/enable")
 			case termbox.KeyArrowRight:
-				go http.Post("http://192.168.1.107:4000/v1/engine/quit", contentType, nil)
+				go http.Get("http://192.168.1.107:4000/v1/audio/disable")
 			case termbox.KeySpace:
 			default:
 				cmd := commandRequest{
@@ -62,7 +62,7 @@ func main() {
 				if err != nil {
 					log.Fatal(err)
 				}
-				go http.Post("http://192.168.1.107:4000/v1/engine/command", contentType, bytes.NewBuffer(data))
+				go http.Post("http://192.168.1.107:4000/v1/audio/command", contentType, bytes.NewBuffer(data))
 				go http.Post("http://192.168.1.107:4000/sound/command", contentType, nil)
 			}
 		}

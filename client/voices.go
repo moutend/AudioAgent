@@ -8,7 +8,6 @@ import (
 	"math"
 	"net/http"
 	"strconv"
-	"strings"
 	"syscall"
 	"unsafe"
 )
@@ -37,54 +36,6 @@ type getVoicesResponse struct {
 
 type putVoiceRequest rwVoiceProperty
 
-func voicesHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	defer func() {
-		w.Header().Set("Content-Type", jsonContentType)
-
-		if err == nil {
-			return
-		}
-
-		data, _ := json.Marshal(struct {
-			Error string `json:"error"`
-		}{
-			Error: err.Error(),
-		})
-
-		io.Copy(w, bytes.NewBuffer(data))
-
-		w.WriteHeader(http.StatusBadRequest)
-	}()
-
-	voiceIndex := ""
-
-	if ps := strings.Split(r.URL.Path, "/"); len(ps) > 4 {
-		voiceIndex = ps[3]
-	}
-	if voiceIndex == "" {
-		err = processVoices(w, r)
-		return
-	}
-
-	var i int
-
-	if i, err = strconv.Atoi(voiceIndex); err != nil {
-		return
-	}
-
-	err = processVoice(int32(i), w, r)
-}
-
-func processVoices(w http.ResponseWriter, r *http.Request) error {
-	if r.Method != "GET" {
-		return fmt.Errorf("Invalid HTTP method: %v", r.Method)
-	}
-
-	return getVoices(w, r)
-}
-
 func getVoices(w http.ResponseWriter, r *http.Request) error {
 	var code int32
 	var numberOfVoices int32
@@ -93,7 +44,7 @@ func getVoices(w http.ResponseWriter, r *http.Request) error {
 
 	if code != 0 {
 		logger.Printf("Failed to call GetVoiceCount() code=%d", code)
-		return fmt.Errorf("Internal error (code=%v)", code)
+		return fmt.Errorf("Internal error")
 	}
 
 	var defaultVoiceIndex int32
@@ -102,7 +53,7 @@ func getVoices(w http.ResponseWriter, r *http.Request) error {
 
 	if code != 0 {
 		logger.Printf("Failed to call GetDefaultVoice() code=%d", code)
-		return fmt.Errorf("Internal error (code=%v)", code)
+		return fmt.Errorf("Internal error")
 	}
 
 	voiceProperties := make([]voiceProperty, numberOfVoices)
@@ -174,8 +125,8 @@ func getVoices(w http.ResponseWriter, r *http.Request) error {
 		voiceProperties[i].AudioVolume = audioVolume
 	}
 	if code != 0 {
-		logger.Fatalf("Failed to obtain voice info (code=%v)", code)
-		return fmt.Errorf("Internal error (code=%v)", code)
+		logger.Printf("Failed to obtain voice info (code=%v)", code)
+		return fmt.Errorf("Internal error")
 	}
 
 	data, err := json.Marshal(getVoicesResponse{
@@ -184,46 +135,47 @@ func getVoices(w http.ResponseWriter, r *http.Request) error {
 	})
 
 	if err != nil {
-		logger.Fatal(err)
-		return err
+		logger.Println(err)
+		return fmt.Errorf("Internal error")
 	}
 
 	if _, err = io.Copy(w, bytes.NewBuffer(data)); err != nil {
-		logger.Fatal(err)
+		logger.Println(err)
 		return fmt.Errorf("Internal error")
 	}
 
 	return nil
 }
 
-func processVoice(voiceIndex int32, w http.ResponseWriter, r *http.Request) error {
-	switch r.Method {
-	case "PUT":
-		return putVoice(voiceIndex, w, r)
-	default:
+func putVoice(w http.ResponseWriter, r *http.Request) error {
+	indexStr := r.URL.Query().Get("index")
+
+	if indexStr == "" {
+		err := fmt.Errorf("Query parameter 'index' is missing")
+
+		logger.Println(err)
+		return err
 	}
 
-	return fmt.Errorf("Invalid HTTP method: %v", r.Method)
-}
+	indexInt, err := strconv.Atoi(indexStr)
 
-func putVoice(voiceIndex int32, w http.ResponseWriter, r *http.Request) error {
+	if err != nil {
+		logger.Println(err)
+		return fmt.Errorf("Query parameter 'index' must be number")
+	}
+
+	voiceIndex := int32(indexInt)
 	buf := &bytes.Buffer{}
 
-	if n, err := io.Copy(buf, r.Body); err != nil || n == 0 {
-		if err != nil {
-			logger.Fatal(err)
-		} else {
-			logger.Fatalf("Failed to read request body")
-		}
-
-		return fmt.Errorf("requested JSON is empty or broken")
+	if _, err := io.Copy(buf, r.Body); err != nil {
+		logger.Println(err)
+		return fmt.Errorf("requested JSON is broken")
 	}
 
 	var req putVoiceRequest
 
 	if err := json.Unmarshal(buf.Bytes(), &req); err != nil {
-		logger.Fatal(err)
-
+		logger.Println(err)
 		return fmt.Errorf("Requested JSON is invalid")
 	}
 
@@ -233,9 +185,14 @@ func putVoice(voiceIndex int32, w http.ResponseWriter, r *http.Request) error {
 		procSetSpeakingRate.Call(uintptr(unsafe.Pointer(&code)), uintptr(voiceIndex), uintptr(math.Float64bits(req.SpeakingRate)))
 	}
 	if code != 0 {
-		logger.Fatalf("Failed to call SetSpeakingRate(code=%v, index=%v, rate=%.2f)", code, voiceIndex, req.SpeakingRate)
+		err := fmt.Errorf("Failed to call SetSpeakingRate(code=%v, index=%v, rate=%.2f)", code, voiceIndex, req.SpeakingRate)
 
-		return fmt.Errorf("Internal error: Failed to call SetSpeakingRate")
+		logger.Println(err)
+		return err
+	}
+	if _, err := io.WriteString(w, "{}"); err != nil {
+		logger.Println(err)
+		return fmt.Errorf("Failed to write response")
 	}
 
 	return nil

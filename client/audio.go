@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"path/filepath"
-	"strings"
 	"syscall"
 	"unsafe"
 )
@@ -39,69 +38,19 @@ const (
 	enumSSML = 4
 )
 
-func audioHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	defer func() {
-		w.Header().Set("Content-Type", jsonContentType)
-
-		data, _ := json.Marshal(struct {
-			Error string `json:"error"`
-		}{
-			Error: err.Error(),
-		})
-
-		io.Copy(w, bytes.NewBuffer(data))
-
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-		}
-	}()
-
-	verb := ""
-
-	if ps := strings.Split(r.URL.Path, "/"); len(ps) > 4 {
-		verb = ps[3]
-	}
-	switch verb {
-	case "command":
-		if r.Method == "POST" {
-			err = postCommand(w, r)
-		}
-	case "enable":
-		if r.Method == "GET" {
-			err = getEnable()
-		}
-	case "disable":
-		if r.Method == "GET" {
-			getEnable()
-		}
-	case "pause":
-		if r.Method == "GET" {
-			err = getPause()
-		}
-	case "restart":
-		if r.Method == "GET" {
-			getRestart()
-		}
-	default:
-		err = fmt.Errorf("Invalid request")
-	}
-}
-
-func postCommand(w http.ResponseWriter, r *http.Request) error {
+func postAudioCommand(w http.ResponseWriter, r *http.Request) error {
 	buf := &bytes.Buffer{}
 
-	if n, err := io.Copy(buf, r.Body); err != nil || n == 0 {
-		logger.Fatalf("Failed to read request body")
-		return fmt.Errorf("Internal error")
+	if _, err := io.Copy(buf, r.Body); err != nil {
+		logger.Println(err)
+		return fmt.Errorf("Requested JSON is broken")
 	}
 
 	var req postCommandRequest
 
 	if err := json.Unmarshal(buf.Bytes(), &req); err != nil {
-		logger.Fatal(err)
-		return fmt.Errorf("Internal error")
+		logger.Println(err)
+		return fmt.Errorf("Requested JSON is invalid")
 	}
 
 	rawCommands := make([]uintptr, len(req.Commands), len(req.Commands))
@@ -116,14 +65,14 @@ func postCommand(w http.ResponseWriter, r *http.Request) error {
 			textU16, err := syscall.UTF16FromString(text)
 
 			if err != nil {
-				logger.Fatal(err)
+				logger.Println(err)
 				return fmt.Errorf("Internal error")
 			}
 
 			textU16Ptr, err := syscall.UTF16PtrFromString(text)
 
 			if err != nil {
-				logger.Fatal(err)
+				logger.Println(err)
 				return fmt.Errorf("Internal error")
 			}
 
@@ -134,7 +83,7 @@ func postCommand(w http.ResponseWriter, r *http.Request) error {
 			ssmlU16, err := syscall.UTF16FromString(ssml)
 
 			if err != nil {
-				logger.Fatal(err)
+				logger.Println(err)
 				return fmt.Errorf("Internal error")
 			}
 
@@ -164,13 +113,17 @@ func postCommand(w http.ResponseWriter, r *http.Request) error {
 	}
 	if code != 0 {
 		logger.Printf("Failed to call Feed (code=%v)", code)
-		return fmt.Errorf("")
+		return fmt.Errorf("Internal error")
+	}
+	if _, err := io.WriteString(w, "{}"); err != nil {
+		logger.Println(err)
+		return fmt.Errorf("Internal error")
 	}
 
 	return nil
 }
 
-func getRestart() error {
+func getAudioRestart(w http.ResponseWriter, r *http.Request) error {
 	var code int32
 
 	procFadeIn.Call(uintptr(unsafe.Pointer(&code)))
@@ -179,11 +132,15 @@ func getRestart() error {
 		logger.Printf("Failed to call FadeIn (code=%v) code=%d", code)
 		return fmt.Errorf("Internal error")
 	}
+	if _, err := io.WriteString(w, "{}"); err != nil {
+		logger.Println(err)
+		return fmt.Errorf("Internal error")
+	}
 
 	return nil
 }
 
-func getPause() error {
+func getAudioPause(w http.ResponseWriter, r *http.Request) error {
 	var code int32
 
 	procFadeOut.Call(uintptr(unsafe.Pointer(&code)))
@@ -192,16 +149,20 @@ func getPause() error {
 		logger.Fatalf("Failed to call FadeOut (code=%v)", code)
 		return fmt.Errorf("Internal error")
 	}
+	if _, err := io.WriteString(w, "{}"); err != nil {
+		logger.Println(err)
+		return fmt.Errorf("Internal error")
+	}
 
 	return nil
 }
 
-func getEnable() error {
+func getAudioEnable(w http.ResponseWriter, r *http.Request) error {
 	fullLogPath := filepath.Join(logPath, "AudioNode.ltsv")
 	fullLogPathU16ptr, err := syscall.UTF16PtrFromString(fullLogPath)
 
 	if err != nil {
-		logger.Fatal(err)
+		logger.Println(err)
 		return fmt.Errorf("Internal error")
 	}
 
@@ -213,17 +174,24 @@ func getEnable() error {
 		logger.Printf("Failed to call Start()")
 		return fmt.Errorf("Internal error")
 	}
-
+	if _, err := io.WriteString(w, "{}"); err != nil {
+		logger.Println(err)
+		return fmt.Errorf("Internal error")
+	}
 	return nil
 }
 
-func getDisable() error {
+func getAudioDisable(w http.ResponseWriter, r *http.Request) error {
 	var code int32
 
 	procQuit.Call(uintptr(unsafe.Pointer(&code)))
 
 	if code != 0 {
-		logger.Fatalf("Failed to call Quit (code=%v)", code)
+		logger.Println("Failed to call Quit (code=%v)", code)
+		return fmt.Errorf("Internal error")
+	}
+	if _, err := io.WriteString(w, "{}"); err != nil {
+		logger.Println(err)
 		return fmt.Errorf("Internal error")
 	}
 
