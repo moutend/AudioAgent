@@ -7,6 +7,7 @@ import (
 	"io"
 	"math"
 	"net/http"
+	"strconv"
 	"strings"
 	"syscall"
 	"unsafe"
@@ -29,29 +30,62 @@ type rwVoiceProperty struct {
 	AudioVolume  float64 `json:"audioVolume"`
 }
 
+type getVoicesResponse struct {
+	DefaultVoiceIndex int32           `json:"defaultVoiceIndex"`
+	Voices            []voiceProperty `json:"voices"`
+}
+
 type putVoiceRequest rwVoiceProperty
 
 func voicesHandler(w http.ResponseWriter, r *http.Request) {
-	voiceId := ""
+	var err error
 
-	if ps := strings.Split(r.URL.Path, "/"); len(ps) > 2 {
-		voiceId = ps[2]
-	}
-	if voiceId == "" {
-		processVoices(w, r)
-	} else {
-		processVoice(voiceId, w, r)
-	}
-}
+	defer func() {
+		w.Header().Set("Content-Type", jsonContentType)
 
-func processVoices(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
+		if err == nil {
+			return
+		}
+
+		data, _ := json.Marshal(struct {
+			Error string `json:"error"`
+		}{
+			Error: err.Error(),
+		})
+
+		io.Copy(w, bytes.NewBuffer(data))
+
+		w.WriteHeader(http.StatusBadRequest)
+	}()
+
+	voiceIndex := ""
+
+	if ps := strings.Split(r.URL.Path, "/"); len(ps) > 4 {
+		voiceIndex = ps[3]
+	}
+	if voiceIndex == "" {
+		err = processVoices(w, r)
 		return
 	}
-	getVoices(w, r)
+
+	var i int
+
+	if i, err = strconv.Atoi(voiceIndex); err != nil {
+		return
+	}
+
+	err = processVoice(int32(i), w, r)
 }
 
-func getVoices(w http.ResponseWriter, r *http.Request) {
+func processVoices(w http.ResponseWriter, r *http.Request) error {
+	if r.Method != "GET" {
+		return fmt.Errorf("Invalid HTTP method: %v", r.Method)
+	}
+
+	return getVoices(w, r)
+}
+
+func getVoices(w http.ResponseWriter, r *http.Request) error {
 	var code int32
 	var numberOfVoices int32
 
@@ -59,6 +93,7 @@ func getVoices(w http.ResponseWriter, r *http.Request) {
 
 	if code != 0 {
 		logger.Printf("Failed to call GetVoiceCount() code=%d", code)
+		return fmt.Errorf("Internal error (code=%v)", code)
 	}
 
 	var defaultVoiceIndex int32
@@ -67,6 +102,7 @@ func getVoices(w http.ResponseWriter, r *http.Request) {
 
 	if code != 0 {
 		logger.Printf("Failed to call GetDefaultVoice() code=%d", code)
+		return fmt.Errorf("Internal error (code=%v)", code)
 	}
 
 	voiceProperties := make([]voiceProperty, numberOfVoices)
@@ -126,35 +162,44 @@ func getVoices(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		voiceProperties[i] = voiceProperty{
-			Id:           syscall.UTF16ToString(id),
-			DisplayName:  syscall.UTF16ToString(displayName),
-			Language:     syscall.UTF16ToString(language),
-			SpeakingRate: speakingRate,
-			AudioPitch:   audioPitch,
-			AudioVolume:  audioVolume,
-		}
+		speakingRate := 0.0
+		audioPitch := 0.0
+		audioVolume := 0.0
+
+		voiceProperties[i].Id = syscall.UTF16ToString(id)
+		voiceProperties[i].DisplayName = syscall.UTF16ToString(displayName)
+		voiceProperties[i].Language = syscall.UTF16ToString(language)
+		voiceProperties[i].SpeakingRate = speakingRate
+		voiceProperties[i].AudioPitch = audioPitch
+		voiceProperties[i].AudioVolume = audioVolume
 	}
 	if code != 0 {
-		// todo
+		logger.Fatalf("Failed to obtain voice info (code=%v)", code)
+		return fmt.Errorf("Internal error (code=%v)", code)
 	}
 
 	data, err := json.Marshal(getVoicesResponse{
 		DefaultVoiceIndex: defaultVoiceIndex,
-		VoiceProperties:   voiceProperties,
+		Voices:            voiceProperties,
 	})
 
 	if err != nil {
-		logger.Fatal("failed to call json.Marshal()")
+		logger.Fatal(err)
+		return err
 	}
 
-	io.Copy(w, bytes.NewBuffer(data))
+	if _, err = io.Copy(w, bytes.NewBuffer(data)); err != nil {
+		logger.Fatal(err)
+		return fmt.Errorf("Internal error")
+	}
+
+	return nil
 }
 
 func processVoice(voiceIndex int32, w http.ResponseWriter, r *http.Request) error {
 	switch r.Method {
 	case "PUT":
-		return putVoice(voiceId, w, r)
+		return putVoice(voiceIndex, w, r)
 	default:
 	}
 
@@ -166,7 +211,7 @@ func putVoice(voiceIndex int32, w http.ResponseWriter, r *http.Request) error {
 
 	if n, err := io.Copy(buf, r.Body); err != nil || n == 0 {
 		if err != nil {
-			logger.fatal(err)
+			logger.Fatal(err)
 		} else {
 			logger.Fatalf("Failed to read request body")
 		}
