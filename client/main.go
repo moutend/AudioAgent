@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math"
 	"net/http"
 	"os"
 	"os/user"
@@ -336,7 +337,7 @@ func speakingRateHandler(w http.ResponseWriter, r *http.Request) {
 
 	var code int32
 
-	procSetSpeakingRate.Call(uintptr(unsafe.Pointer(&code)), uintptr(req.Index), uintptr(req.SpeakingRate))
+	procSetSpeakingRate.Call(uintptr(unsafe.Pointer(&code)), uintptr(req.Index), uintptr(math.Float64bits(req.SpeakingRate)))
 
 	if code != 0 {
 		logger.Printf("Failed to call SetSpeakingRate() code=%d", code)
