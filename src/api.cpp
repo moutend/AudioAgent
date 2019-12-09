@@ -705,10 +705,12 @@ void __stdcall SetSpeakingRate(int32_t *code, int32_t index, double rate) {
     return;
   }
 
-  std::wstring wss;
-  wss << L"Called SetSpeakingRate (rate=" << rate;
+  std::wstringstream wss;
+  wss << L"Called SetSpeakingRate (rate=";
+  wss << rate;
+  wss << ")";
 
-  Log->Info(wss.c_str(), GetCurrentThreadId(), __LINE__, __WFILE__);
+  Log->Info(wss.str(), GetCurrentThreadId(), __LINE__, __WFILE__);
 
   voiceInfoCtx->VoiceProperties[index]->SpeakingRate = rate;
 }
