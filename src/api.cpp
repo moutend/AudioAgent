@@ -890,6 +890,12 @@ void __stdcall SetSpeakingRate(int32_t *code, int32_t index, double rate) {
   delete[] s;
   s = nullptr;
 
+  if (rate < 0.5) {
+    rate = 0.5;
+  }
+  if (rate > 6.0) {
+    rate = 6.0;
+  }
   voiceInfoCtx->VoiceProperties[index]->SpeakingRate = rate;
 }
 
