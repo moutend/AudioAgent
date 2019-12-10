@@ -170,7 +170,7 @@ func getVoices(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func putVoice(w http.ResponseWriter, r *http.Request) error {
+func postVoice(w http.ResponseWriter, r *http.Request) error {
 	indexStr := r.URL.Query().Get("index")
 
 	if indexStr == "" {
@@ -227,6 +227,189 @@ func putVoice(w http.ResponseWriter, r *http.Request) error {
 	}
 	if code != 0 {
 		err := fmt.Errorf("Failed to call SetAudioVolume (code=%v, index=%v, rate=%.2f)", code, voiceIndex, req.SpeakingRate)
+
+		logger.Println(err)
+		return err
+	}
+	if _, err := io.WriteString(w, "{}"); err != nil {
+		logger.Println(err)
+		return fmt.Errorf("Failed to write response")
+	}
+
+	return nil
+}
+
+func postVoiceRate(w http.ResponseWriter, r *http.Request) error {
+	diffStr := r.URL.Query().Get("diff")
+
+	if diffStr == "" {
+		err := fmt.Errorf("Query parameter 'diff' is missing")
+
+		logger.Println(err)
+		return err
+	}
+
+	diffFloat64, err := strconv.ParseFloat(diffStr, 64)
+
+	if err != nil {
+		logger.Println(err)
+		return fmt.Errorf("Query parameter 'index' must be number")
+	}
+	if diffFloat64 == 0.0 {
+		return nil
+	}
+
+	var code int32
+	var voiceIndex int32
+
+	procGetDefaultVoice.Call(uintptr(unsafe.Pointer(&code)), uintptr(unsafe.Pointer(&voiceIndex)))
+
+	if code != 0 {
+		err := fmt.Errorf("Failed to call GetDefaultVoice (code=%v)", code)
+
+		logger.Println(err)
+		return err
+	}
+
+	var speakingRate uint64
+
+	procGetSpeakingRate.Call(uintptr(unsafe.Pointer(&code)), uintptr(voiceIndex), uintptr(unsafe.Pointer(&speakingRate)))
+
+	if code != 0 {
+		err := fmt.Errorf("Failed to call GetSpeakingRate (code=%v, index=%v)", code, voiceIndex)
+
+		logger.Println(err)
+		return err
+	}
+
+	newSpeakingRate := diffFloat64 + math.Float64frombits(speakingRate)
+
+	procSetSpeakingRate.Call(uintptr(unsafe.Pointer(&code)), uintptr(voiceIndex), uintptr(math.Float64bits(newSpeakingRate)))
+
+	if code != 0 {
+		err := fmt.Errorf("Failed to call SetSpeakingRate (code=%v, index=%v, rate=%.2f)", code, voiceIndex, newSpeakingRate)
+
+		logger.Println(err)
+		return err
+	}
+	if _, err := io.WriteString(w, "{}"); err != nil {
+		logger.Println(err)
+		return fmt.Errorf("Failed to write response")
+	}
+
+	return nil
+}
+
+func postVoicePitch(w http.ResponseWriter, r *http.Request) error {
+	diffStr := r.URL.Query().Get("diff")
+
+	if diffStr == "" {
+		err := fmt.Errorf("Query parameter 'diff' is missing")
+
+		logger.Println(err)
+		return err
+	}
+
+	diffFloat64, err := strconv.ParseFloat(diffStr, 64)
+
+	if err != nil {
+		logger.Println(err)
+		return fmt.Errorf("Query parameter 'index' must be number")
+	}
+	if diffFloat64 == 0.0 {
+		return nil
+	}
+
+	var code int32
+	var voiceIndex int32
+
+	procGetDefaultVoice.Call(uintptr(unsafe.Pointer(&code)), uintptr(unsafe.Pointer(&voiceIndex)))
+
+	if code != 0 {
+		err := fmt.Errorf("Failed to call GetDefaultVoice (code=%v)", code)
+
+		logger.Println(err)
+		return err
+	}
+
+	var speakingPitch uint64
+
+	procGetAudioPitch.Call(uintptr(unsafe.Pointer(&code)), uintptr(voiceIndex), uintptr(unsafe.Pointer(&speakingPitch)))
+
+	if code != 0 {
+		err := fmt.Errorf("Failed to call GetAudioPitch (code=%v, index=%v)", code, voiceIndex)
+
+		logger.Println(err)
+		return err
+	}
+
+	newSpeakingPitch := diffFloat64 + math.Float64frombits(speakingPitch)
+
+	procSetAudioPitch.Call(uintptr(unsafe.Pointer(&code)), uintptr(voiceIndex), uintptr(math.Float64bits(newSpeakingPitch)))
+
+	if code != 0 {
+		err := fmt.Errorf("Failed to call SetAudioPitch (code=%v, index=%v, audioPitch=%.2f)", code, voiceIndex, newSpeakingPitch)
+
+		logger.Println(err)
+		return err
+	}
+	if _, err := io.WriteString(w, "{}"); err != nil {
+		logger.Println(err)
+		return fmt.Errorf("Failed to write response")
+	}
+
+	return nil
+}
+
+func postVoiceVolume(w http.ResponseWriter, r *http.Request) error {
+	diffStr := r.URL.Query().Get("diff")
+
+	if diffStr == "" {
+		err := fmt.Errorf("Query parameter 'diff' is missing")
+
+		logger.Println(err)
+		return err
+	}
+
+	diffFloat64, err := strconv.ParseFloat(diffStr, 64)
+
+	if err != nil {
+		logger.Println(err)
+		return fmt.Errorf("Query parameter 'index' must be number")
+	}
+	if diffFloat64 == 0.0 {
+		return nil
+	}
+
+	var code int32
+	var voiceIndex int32
+
+	procGetDefaultVoice.Call(uintptr(unsafe.Pointer(&code)), uintptr(unsafe.Pointer(&voiceIndex)))
+
+	if code != 0 {
+		err := fmt.Errorf("Failed to call GetDefaultVoice (code=%v)", code)
+
+		logger.Println(err)
+		return err
+	}
+
+	var speakingVolume uint64
+
+	procGetAudioVolume.Call(uintptr(unsafe.Pointer(&code)), uintptr(voiceIndex), uintptr(unsafe.Pointer(&speakingVolume)))
+
+	if code != 0 {
+		err := fmt.Errorf("Failed to call GetAudioVolume (code=%v, index=%v)", code, voiceIndex)
+
+		logger.Println(err)
+		return err
+	}
+
+	newSpeakingVolume := diffFloat64 + math.Float64frombits(speakingVolume)
+
+	procSetAudioVolume.Call(uintptr(unsafe.Pointer(&code)), uintptr(voiceIndex), uintptr(math.Float64bits(newSpeakingVolume)))
+
+	if code != 0 {
+		err := fmt.Errorf("Failed to call SetAudioVolume (code=%v, index=%v, audioVolume=%.2f)", code, voiceIndex, newSpeakingVolume)
 
 		logger.Println(err)
 		return err

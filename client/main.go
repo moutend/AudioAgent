@@ -38,7 +38,10 @@ func main() {
 	mux.Get("/v1/audio/pause", getAudioPause)
 
 	mux.Get("/v1/voices", getVoices)
-	mux.Put("/v1/voice", putVoice)
+	mux.Post("/v1/voice", postVoice)
+	mux.Post("/v1/voice/rate", postVoiceRate)
+	mux.Post("/v1/voice/pitch", postVoicePitch)
+	mux.Post("/v1/voice/volume", postVoiceVolume)
 
 	server := &http.Server{
 		Addr:    ":4000",
