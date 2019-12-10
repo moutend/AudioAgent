@@ -428,6 +428,9 @@ void __stdcall FadeIn(int32_t *code) {
     *code = -1;
     return;
   }
+  if (Log != nullptr) {
+    Log->Info(L"Called FadeIn", GetCurrentThreadId(), __LINE__, __WFILE__);
+  }
 
   voiceEngine->FadeIn();
   soundEngine->FadeIn();
@@ -442,6 +445,9 @@ void __stdcall FadeOut(int32_t *code) {
   if (!isActive) {
     *code = -1;
     return;
+  }
+  if (Log != nullptr) {
+    Log->Info(L"Called FadeOut", GetCurrentThreadId(), __LINE__, __WFILE__);
   }
 
   voiceEngine->FadeOut();
@@ -462,6 +468,9 @@ void __stdcall Feed(int32_t *code, Command **commandsPtr,
   if (commandsPtr == nullptr || commandsLength <= 0) {
     *code = -2;
     return;
+  }
+  if (Log != nullptr) {
+    Log->Info(L"Called Feed", GetCurrentThreadId(), __LINE__, __WFILE__);
   }
 
   int32_t base = commandLoopCtx->WriteIndex;
