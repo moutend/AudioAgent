@@ -46,17 +46,17 @@ DWORD WINAPI voiceInfo(LPVOID context) {
 
     ctx->VoiceProperties[i] = new VoiceProperty();
 
-    size_t idLength = wcslen(info->Id->Data());
+    size_t idLength = wcslen(synth->Voice->Id->Data());
     ctx->VoiceProperties[i]->Id = new wchar_t[idLength + 1]{};
     std::wmemcpy(ctx->VoiceProperties[i]->Id, synth->Voice->Id->Data(),
                  idLength);
 
-    size_t displayNameLength = wcslen(info->DisplayName->Data());
+    size_t displayNameLength = wcslen(synth->Voice->DisplayName->Data());
     ctx->VoiceProperties[i]->DisplayName = new wchar_t[displayNameLength + 1]{};
     std::wmemcpy(ctx->VoiceProperties[i]->DisplayName,
                  synth->Voice->DisplayName->Data(), displayNameLength);
 
-    size_t languageLength = wcslen(info->Language->Data());
+    size_t languageLength = wcslen(synth->Voice->Language->Data());
     ctx->VoiceProperties[i]->Language = new wchar_t[languageLength + 1]{};
     std::wmemcpy(ctx->VoiceProperties[i]->Language,
                  synth->Voice->Language->Data(), languageLength);
@@ -65,7 +65,7 @@ DWORD WINAPI voiceInfo(LPVOID context) {
     ctx->VoiceProperties[i]->AudioPitch = synth->Options->AudioPitch;
     ctx->VoiceProperties[i]->AudioVolume = synth->Options->AudioVolume;
 
-    if (defaultInfo->Id->Equals(info->Id)) {
+    if (defaultInfo->Id->Equals(synth->Voice->Id)) {
       defaultVoiceIndex = i;
     }
   }
