@@ -42,23 +42,28 @@ DWORD WINAPI voiceInfo(LPVOID context) {
   VoiceInformation ^ defaultInfo = synth->DefaultVoice;
 
   for (unsigned int i = 0; i < ctx->Count; ++i) {
-    VoiceInformation ^ info = synth->AllVoices->GetAt(i);
+    synth->Voice = synth->AllVoices->GetAt(i);
 
     ctx->VoiceProperties[i] = new VoiceProperty();
 
     size_t idLength = wcslen(info->Id->Data());
     ctx->VoiceProperties[i]->Id = new wchar_t[idLength + 1]{};
-    std::wmemcpy(ctx->VoiceProperties[i]->Id, info->Id->Data(), idLength);
+    std::wmemcpy(ctx->VoiceProperties[i]->Id, synth->Voice->Id->Data(),
+                 idLength);
 
     size_t displayNameLength = wcslen(info->DisplayName->Data());
     ctx->VoiceProperties[i]->DisplayName = new wchar_t[displayNameLength + 1]{};
     std::wmemcpy(ctx->VoiceProperties[i]->DisplayName,
-                 info->DisplayName->Data(), displayNameLength);
+                 synth->Voice->DisplayName->Data(), displayNameLength);
 
     size_t languageLength = wcslen(info->Language->Data());
     ctx->VoiceProperties[i]->Language = new wchar_t[languageLength + 1]{};
-    std::wmemcpy(ctx->VoiceProperties[i]->Language, info->Language->Data(),
-                 languageLength);
+    std::wmemcpy(ctx->VoiceProperties[i]->Language,
+                 synth->Voice->Language->Data(), languageLength);
+
+    ctx->VoiceProperties[i]->SpeakingRate = synth->Options->SpeakingRate;
+    ctx->VoiceProperties[i]->AudioPitch = synth->Options->AudioPitch;
+    ctx->VoiceProperties[i]->AudioVolume = synth->Options->AudioVolume;
 
     if (defaultInfo->Id->Equals(info->Id)) {
       defaultVoiceIndex = i;
