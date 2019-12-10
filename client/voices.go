@@ -204,7 +204,7 @@ func putVoice(w http.ResponseWriter, r *http.Request) error {
 
 	var code int32
 
-	if req.SpeakingRate != 0.0 {
+	if req.SpeakingRate >= 0.0 {
 		procSetSpeakingRate.Call(uintptr(unsafe.Pointer(&code)), uintptr(voiceIndex), uintptr(math.Float64bits(req.SpeakingRate)))
 	}
 	if code != 0 {
@@ -213,8 +213,8 @@ func putVoice(w http.ResponseWriter, r *http.Request) error {
 		logger.Println(err)
 		return err
 	}
-	if req.AudioPitch != 0.0 {
-		procSetAudioPitch.Call(uintptr(unsafe.Pointer(&code)), uintptr(voiceIndex), uintptr(math.Float64bits(req.SpeakingRate)))
+	if req.AudioPitch >= 0.0 {
+		procSetAudioPitch.Call(uintptr(unsafe.Pointer(&code)), uintptr(voiceIndex), uintptr(math.Float64bits(req.AudioPitch)))
 	}
 	if code != 0 {
 		err := fmt.Errorf("Failed to call SetAudioPitch (code=%v, index=%v, rate=%.2f)", code, voiceIndex, req.SpeakingRate)
@@ -222,8 +222,8 @@ func putVoice(w http.ResponseWriter, r *http.Request) error {
 		logger.Println(err)
 		return err
 	}
-	if req.AudioVolume != 0.0 {
-		procSetAudioVolume.Call(uintptr(unsafe.Pointer(&code)), uintptr(voiceIndex), uintptr(math.Float64bits(req.SpeakingRate)))
+	if req.AudioVolume >= 0.0 {
+		procSetAudioVolume.Call(uintptr(unsafe.Pointer(&code)), uintptr(voiceIndex), uintptr(math.Float64bits(req.AudioVolume)))
 	}
 	if code != 0 {
 		err := fmt.Errorf("Failed to call SetAudioVolume (code=%v, index=%v, rate=%.2f)", code, voiceIndex, req.SpeakingRate)
