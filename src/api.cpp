@@ -967,6 +967,13 @@ void __stdcall SetAudioPitch(int32_t *code, int32_t index, double audioPitch) {
   delete[] s;
   s = nullptr;
 
+  if (audioPitch < 0.0) {
+    audioPitch = 0.0;
+  }
+  if (audioPitch > 2.0) {
+    audioPitch = 2.0
+  }
+
   voiceInfoCtx->VoiceProperties[index]->AudioPitch = audioPitch;
 }
 
@@ -1045,6 +1052,13 @@ void __stdcall SetAudioVolume(int32_t *code, int32_t index,
 
   delete[] s;
   s = nullptr;
+
+  if (audioVolume < 0.0) {
+    audioVolume = 0.0;
+  }
+  if (audioVollume > 1.0) {
+    audioVolume = 1.0;
+  }
 
   voiceInfoCtx->VoiceProperties[index]->AudioVolume = audioVolume;
 }
