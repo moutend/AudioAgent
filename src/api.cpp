@@ -977,7 +977,7 @@ void __stdcall SetAudioPitch(int32_t *code, int32_t index, double audioPitch) {
     audioPitch = 0.0;
   }
   if (audioPitch > 2.0) {
-    audioPitch = 2.0
+    audioPitch = 2.0;
   }
 
   voiceInfoCtx->VoiceProperties[index]->AudioPitch = audioPitch;
