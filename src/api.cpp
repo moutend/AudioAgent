@@ -1062,7 +1062,7 @@ void __stdcall SetAudioVolume(int32_t *code, int32_t index,
   if (audioVolume < 0.0) {
     audioVolume = 0.0;
   }
-  if (audioVollume > 1.0) {
+  if (audioVolume > 1.0) {
     audioVolume = 1.0;
   }
 
