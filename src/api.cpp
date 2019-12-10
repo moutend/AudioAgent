@@ -520,6 +520,10 @@ void __stdcall GetVoiceCount(int32_t *code, int32_t *numberOfVoices) {
     *code = -2;
     return;
   }
+  if (Log != nullptr) {
+    Log->Info(L"Called GetVoiceCount", GetCurrentThreadId(), __LINE__,
+              __WFILE__);
+  }
 
   *numberOfVoices = voiceInfoCtx->Count;
 }
@@ -536,6 +540,29 @@ void __stdcall GetVoiceDisplayName(int32_t *code, int32_t index,
     *code = -1;
     return;
   }
+  if (index < 0 || index > static_cast<int32_t>(voiceInfoCtx->Count)) {
+    *code = -2;
+    return;
+  }
+  if (voiceInfoCtx->VoiceProperties == nullptr) {
+    *code = -3;
+    return;
+  }
+
+  wchar_t *s = new wchar_t[256]{};
+  HRESULT hr =
+      StringCbPrintfW(s, 256, L"Called GetVoiceDisplayName (index=%d)", index);
+
+  if (FAILED(hr)) {
+    *code = -4;
+    return;
+  }
+  if (Log != nullptr) {
+    Log->Info(s, GetCurrentThreadId(), __LINE__, __WFILE__);
+  }
+
+  delete[] s;
+  s = nullptr;
 
   size_t displayNameLength =
       wcslen(voiceInfoCtx->VoiceProperties[index]->DisplayName);
@@ -555,6 +582,29 @@ void __stdcall GetVoiceDisplayNameLength(int32_t *code, int32_t index,
     *code = -1;
     return;
   }
+  if (index < 0 || index > static_cast<int32_t>(voiceInfoCtx->Count)) {
+    *code = -2;
+    return;
+  }
+  if (voiceInfoCtx->VoiceProperties == nullptr) {
+    *code = -3;
+    return;
+  }
+
+  wchar_t *s = new wchar_t[256]{};
+  HRESULT hr = StringCbPrintfW(
+      s, 256, L"Called GetVoiceDisplayNameLength (index=%d)", index);
+
+  if (FAILED(hr)) {
+    *code = -4;
+    return;
+  }
+  if (Log != nullptr) {
+    Log->Info(s, GetCurrentThreadId(), __LINE__, __WFILE__);
+  }
+
+  delete[] s;
+  s = nullptr;
 
   *displayNameLength = static_cast<int32_t>(
       wcslen(voiceInfoCtx->VoiceProperties[index]->DisplayName));
@@ -571,6 +621,28 @@ void __stdcall GetVoiceId(int32_t *code, int32_t index, wchar_t *id) {
     *code = -1;
     return;
   }
+  if (index < 0 || index > static_cast<int32_t>(voiceInfoCtx->Count)) {
+    *code = -2;
+    return;
+  }
+  if (voiceInfoCtx->VoiceProperties == nullptr) {
+    *code = -3;
+    return;
+  }
+
+  wchar_t *s = new wchar_t[256]{};
+  HRESULT hr = StringCbPrintfW(s, 256, L"Called GetVoiceId (index=%d)", index);
+
+  if (FAILED(hr)) {
+    *code = -4;
+    return;
+  }
+  if (Log != nullptr) {
+    Log->Info(s, GetCurrentThreadId(), __LINE__, __WFILE__);
+  }
+
+  delete[] s;
+  s = nullptr;
 
   size_t idLength =
       static_cast<int32_t>(wcslen(voiceInfoCtx->VoiceProperties[index]->Id));
@@ -589,6 +661,29 @@ void __stdcall GetVoiceIdLength(int32_t *code, int32_t index,
     *code = -1;
     return;
   }
+  if (index < 0 || index > static_cast<int32_t>(voiceInfoCtx->Count)) {
+    *code = -2;
+    return;
+  }
+  if (voiceInfoCtx->VoiceProperties == nullptr) {
+    *code = -3;
+    return;
+  }
+
+  wchar_t *s = new wchar_t[256]{};
+  HRESULT hr =
+      StringCbPrintfW(s, 256, L"Called GetVoiceIdLength (index=%d)", index);
+
+  if (FAILED(hr)) {
+    *code = -4;
+    return;
+  }
+  if (Log != nullptr) {
+    Log->Info(s, GetCurrentThreadId(), __LINE__, __WFILE__);
+  }
+
+  delete[] s;
+  s = nullptr;
 
   *idLength =
       static_cast<int32_t>(wcslen(voiceInfoCtx->VoiceProperties[index]->Id));
@@ -606,6 +701,29 @@ void __stdcall GetVoiceLanguage(int32_t *code, int32_t index,
     *code = -1;
     return;
   }
+  if (index < 0 || index > static_cast<int32_t>(voiceInfoCtx->Count)) {
+    *code = -2;
+    return;
+  }
+  if (voiceInfoCtx->VoiceProperties == nullptr) {
+    *code = -3;
+    return;
+  }
+
+  wchar_t *s = new wchar_t[256]{};
+  HRESULT hr =
+      StringCbPrintfW(s, 256, L"Called GetVoiceLanguage (index=%d)", index);
+
+  if (FAILED(hr)) {
+    *code = -4;
+    return;
+  }
+  if (Log != nullptr) {
+    Log->Info(s, GetCurrentThreadId(), __LINE__, __WFILE__);
+  }
+
+  delete[] s;
+  s = nullptr;
 
   size_t languageLength =
       wcslen(voiceInfoCtx->VoiceProperties[index]->Language);
@@ -625,6 +743,29 @@ void __stdcall GetVoiceLanguageLength(int32_t *code, int32_t index,
     *code = -1;
     return;
   }
+  if (index < 0 || index > static_cast<int32_t>(voiceInfoCtx->Count)) {
+    *code = -2;
+    return;
+  }
+  if (voiceInfoCtx->VoiceProperties == nullptr) {
+    *code = -3;
+    return;
+  }
+
+  wchar_t *s = new wchar_t[256]{};
+  HRESULT hr = StringCbPrintfW(
+      s, 256, L"Called GetVoiceLanguageLength (index=%d)", index);
+
+  if (FAILED(hr)) {
+    *code = -4;
+    return;
+  }
+  if (Log != nullptr) {
+    Log->Info(s, GetCurrentThreadId(), __LINE__, __WFILE__);
+  }
+
+  delete[] s;
+  s = nullptr;
 
   *languageLength = static_cast<int32_t>(
       wcslen(voiceInfoCtx->VoiceProperties[index]->Language));
@@ -645,6 +786,10 @@ void __stdcall GetDefaultVoice(int32_t *code, int32_t *index) {
     *code = -2;
     return;
   }
+  if (Log != nullptr) {
+    Log->Info(L"Called GetDefaultVoice", GetCurrentThreadId(), __LINE__,
+              __WFILE__);
+  }
 
   *index = voiceInfoCtx->DefaultVoiceIndex;
 }
@@ -663,6 +808,10 @@ void __stdcall SetDefaultVoice(int32_t *code, int32_t index) {
   if (index < 0 || index > static_cast<int32_t>(voiceInfoCtx->Count)) {
     *code = -2;
     return;
+  }
+  if (Log != nullptr) {
+    Log->Info(L"Called GetDefaultVoice", GetCurrentThreadId(), __LINE__,
+              __WFILE__);
   }
 
   voiceInfoCtx->DefaultVoiceIndex = index;
@@ -683,6 +832,25 @@ void __stdcall GetSpeakingRate(int32_t *code, int32_t index, double *rate) {
     *code = -2;
     return;
   }
+  if (voiceInfoCtx->VoiceProperties == nullptr) {
+    *code = -3;
+    return;
+  }
+
+  wchar_t *s = new wchar_t[256]{};
+  HRESULT hr =
+      StringCbPrintfW(s, 256, L"Called GetSpeakingRate (index=%d)", index);
+
+  if (FAILED(hr)) {
+    *code = -4;
+    return;
+  }
+  if (Log != nullptr) {
+    Log->Info(s, GetCurrentThreadId(), __LINE__, __WFILE__);
+  }
+
+  delete[] s;
+  s = nullptr;
 
   *rate = voiceInfoCtx->VoiceProperties[index]->SpeakingRate;
 }
@@ -723,4 +891,160 @@ void __stdcall SetSpeakingRate(int32_t *code, int32_t index, double rate) {
   s = nullptr;
 
   voiceInfoCtx->VoiceProperties[index]->SpeakingRate = rate;
+}
+
+void __stdcall GetAudioPitch(int32_t *code, int32_t index, double *audioPitch) {
+  if (code == nullptr) {
+    return;
+  }
+
+  *code = 0;
+
+  if (voiceInfoCtx == nullptr) {
+    *code = -1;
+    return;
+  }
+  if (index < 0 || index > static_cast<int32_t>(voiceInfoCtx->Count)) {
+    *code = -2;
+    return;
+  }
+  if (voiceInfoCtx->VoiceProperties == nullptr) {
+    *code = -3;
+    return;
+  }
+
+  wchar_t *s = new wchar_t[256]{};
+  HRESULT hr =
+      StringCbPrintfW(s, 256, L"Called GetAudioPitch (index=%d)", index);
+
+  if (FAILED(hr)) {
+    *code = -4;
+    return;
+  }
+  if (Log != nullptr) {
+    Log->Info(s, GetCurrentThreadId(), __LINE__, __WFILE__);
+  }
+
+  delete[] s;
+  s = nullptr;
+
+  *audioPitch = voiceInfoCtx->VoiceProperties[index]->AudioPitch;
+}
+
+void __stdcall SetAudioPitch(int32_t *code, int32_t index, double audioPitch) {
+  if (code == nullptr) {
+    return;
+  }
+
+  *code = 0;
+
+  if (voiceInfoCtx == nullptr) {
+    *code = -1;
+    return;
+  }
+  if (index < 0 || index > static_cast<int32_t>(voiceInfoCtx->Count)) {
+    *code = -2;
+    return;
+  }
+  if (voiceInfoCtx->VoiceProperties == nullptr) {
+    *code = -3;
+    return;
+  }
+
+  wchar_t *s = new wchar_t[256]{};
+  HRESULT hr = StringCbPrintfW(
+      s, 256, L"Called SetAudioPitch (index=%d, audioPitch=%.2f)", index,
+      audioPitch);
+
+  if (FAILED(hr)) {
+    *code = -4;
+    return;
+  }
+  if (Log != nullptr) {
+    Log->Info(s, GetCurrentThreadId(), __LINE__, __WFILE__);
+  }
+
+  delete[] s;
+  s = nullptr;
+
+  voiceInfoCtx->VoiceProperties[index]->AudioPitch = audioPitch;
+}
+
+void __stdcall GetAudioVolume(int32_t *code, int32_t index,
+                              double *audioVolume) {
+  if (code == nullptr) {
+    return;
+  }
+
+  *code = 0;
+
+  if (voiceInfoCtx == nullptr) {
+    *code = -1;
+    return;
+  }
+  if (index < 0 || index > static_cast<int32_t>(voiceInfoCtx->Count)) {
+    *code = -2;
+    return;
+  }
+  if (voiceInfoCtx->VoiceProperties == nullptr) {
+    *code = -3;
+    return;
+  }
+
+  wchar_t *s = new wchar_t[256]{};
+  HRESULT hr =
+      StringCbPrintfW(s, 256, L"Called GetAudioVolume (index=%d)", index);
+
+  if (FAILED(hr)) {
+    *code = -4;
+    return;
+  }
+  if (Log != nullptr) {
+    Log->Info(s, GetCurrentThreadId(), __LINE__, __WFILE__);
+  }
+
+  delete[] s;
+  s = nullptr;
+
+  *audioVolume = voiceInfoCtx->VoiceProperties[index]->AudioVolume;
+}
+
+void __stdcall SetAudioVolume(int32_t *code, int32_t index,
+                              double audioVolume) {
+  if (code == nullptr) {
+    return;
+  }
+
+  *code = 0;
+
+  if (voiceInfoCtx == nullptr) {
+    *code = -1;
+    return;
+  }
+  if (index < 0 || index > static_cast<int32_t>(voiceInfoCtx->Count)) {
+    *code = -2;
+    return;
+  }
+  if (voiceInfoCtx->VoiceProperties == nullptr) {
+    *code = -3;
+    return;
+  }
+
+  wchar_t *s = new wchar_t[256]{};
+  HRESULT hr = StringCbPrintfW(
+      s, 256, L"Called SetAudioVolume (index=%d, audioVolume=%.2f)", index,
+      audioVolume);
+
+  if (FAILED(hr)) {
+    *code = -4;
+    return;
+  }
+  if (Log != nullptr) {
+    Log->Info(s, GetCurrentThreadId(), __LINE__, __WFILE__);
+  }
+
+  delete[] s;
+  s = nullptr;
+
+  voiceInfoCtx->VoiceProperties[index]->AudioVolume = audioVolume;
 }

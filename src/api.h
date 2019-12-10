@@ -38,4 +38,12 @@ export void __stdcall GetSpeakingRate(int32_t *code, int32_t index,
                                       double *rate);
 export void __stdcall SetSpeakingRate(int32_t *code, int32_t index,
                                       double rate);
+export void __stdcall GetAudioPitch(int32_t *code, int32_t index,
+                                    double *audioPitch);
+export void __stdcall SetAudioPitch(int32_t *code, int32_t index,
+                                    double audioPitch);
+export void __stdcall GetAudioVolume(int32_t *code, int32_t index,
+                                     double *audioVolume);
+export void __stdcall SetAudioVolume(int32_t *code, int32_t index,
+                                     double audioVolume);
 }
