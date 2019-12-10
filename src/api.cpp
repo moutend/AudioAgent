@@ -5,6 +5,8 @@
 #include <sstream>
 #include <windows.h>
 
+#include <strsafe.h>
+
 #include "api.h"
 #include "audioloop.h"
 #include "commandloop.h"
@@ -705,14 +707,14 @@ void __stdcall SetSpeakingRate(int32_t *code, int32_t index, double rate) {
     return;
   }
 
-  wchar_t *s = new wchar_t[128]{};
+  wchar_t *s = new wchar_t[256]{};
   HRESULT hr = StringCbPrintfW(
-      s, 128, L"Called SetSpeakingRate (index=%d, rate=%.2f)", index, rate);
+      s, 256, L"Called SetSpeakingRate (index=%d, rate=%.2f)", index, rate);
 
-  if FAILED(hr)) {
-      *code = -4;
-      return;
-    }
+  if (FAILED(hr)) {
+    *code = -4;
+    return;
+  }
   if (Log != nullptr) {
     Log->Info(s, GetCurrentThreadId(), __LINE__, __WFILE__);
   }
