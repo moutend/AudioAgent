@@ -113,16 +113,39 @@ func getVoices(w http.ResponseWriter, r *http.Request) error {
 			break
 		}
 
-		speakingRate := 0.0
-		audioPitch := 0.0
-		audioVolume := 0.0
+		var speakingRate uint64
+
+		procGetSpeakingRate.Call(uintptr(unsafe.Pointer(&code)), uintptr(i), uintptr(unsafe.Pointer(&speakingRate)))
+
+		if code != 0 {
+			logger.Printf("Failed to call GetSpeakingRate (code=%d)", code)
+			break
+		}
+
+		var audioPitch uint64
+
+		procGetAudioPitch.Call(uintptr(unsafe.Pointer(&code)), uintptr(i), uintptr(unsafe.Pointer(&audioPitch)))
+
+		if code != 0 {
+			logger.Printf("Failed to call GetAudioPitch (code=%d)", code)
+			break
+		}
+
+		var audioVolume uint64
+
+		procGetAudioVolume.Call(uintptr(unsafe.Pointer(&code)), uintptr(i), uintptr(unsafe.Pointer(&audioVolume)))
+
+		if code != 0 {
+			logger.Printf("Failed to call GetAudioVolume (code=%d)", code)
+			break
+		}
 
 		voiceProperties[i].Id = syscall.UTF16ToString(id)
 		voiceProperties[i].DisplayName = syscall.UTF16ToString(displayName)
 		voiceProperties[i].Language = syscall.UTF16ToString(language)
-		voiceProperties[i].SpeakingRate = speakingRate
-		voiceProperties[i].AudioPitch = audioPitch
-		voiceProperties[i].AudioVolume = audioVolume
+		voiceProperties[i].SpeakingRate = math.Float64frombits(speakingRate)
+		voiceProperties[i].AudioPitch = math.Float64frombits(audioPitch)
+		voiceProperties[i].AudioVolume = math.Float64frombits(audioVolume)
 	}
 	if code != 0 {
 		logger.Printf("Failed to obtain voice info (code=%v)", code)
@@ -186,6 +209,24 @@ func putVoice(w http.ResponseWriter, r *http.Request) error {
 	}
 	if code != 0 {
 		err := fmt.Errorf("Failed to call SetSpeakingRate(code=%v, index=%v, rate=%.2f)", code, voiceIndex, req.SpeakingRate)
+
+		logger.Println(err)
+		return err
+	}
+	if req.AudioPitch != 0.0 {
+		procSetAudioPitch.Call(uintptr(unsafe.Pointer(&code)), uintptr(voiceIndex), uintptr(math.Float64bits(req.SpeakingRate)))
+	}
+	if code != 0 {
+		err := fmt.Errorf("Failed to call SetAudioPitch (code=%v, index=%v, rate=%.2f)", code, voiceIndex, req.SpeakingRate)
+
+		logger.Println(err)
+		return err
+	}
+	if req.AudioVolume != 0.0 {
+		procSetAudioVolume.Call(uintptr(unsafe.Pointer(&code)), uintptr(voiceIndex), uintptr(math.Float64bits(req.SpeakingRate)))
+	}
+	if code != 0 {
+		err := fmt.Errorf("Failed to call SetAudioVolume (code=%v, index=%v, rate=%.2f)", code, voiceIndex, req.SpeakingRate)
 
 		logger.Println(err)
 		return err

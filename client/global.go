@@ -27,4 +27,8 @@ var (
 	procSetDefaultVoice           = dll.NewProc("SetDefaultVoice")
 	procGetSpeakingRate           = dll.NewProc("GetSpeakingRate")
 	procSetSpeakingRate           = dll.NewProc("SetSpeakingRate")
+	procGetAudioPitch             = dll.NewProc("GetAudioPitch")
+	procSetAudioPitch             = dll.NewProc("SetAudioPitch")
+	procGetAudioVolume            = dll.NewProc("GetAudioVolume")
+	procSetAudioVolume            = dll.NewProc("SetAudioVolume")
 )
