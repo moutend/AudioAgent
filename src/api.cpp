@@ -172,7 +172,23 @@ void __stdcall Start(int32_t *code, const wchar_t *logPath, int32_t logLevel) {
   }
 
   soundEngine = new PCMAudio::LauncherEngine();
-  soundEngine->Register(0, "input.wav");
+
+  for (int i = 0; i < 128; i++) {
+    wchar_t *filename = new wchar_t[256]{};
+    HRESULT hr = StringCbPrintfW(filename, 255, L"waves\\%03d.wav", i + 1);
+
+    if (FAILED(hr)) {
+      Log->Fail(L"Failed to format filename", GetCurrentThreadId(), __LINE__,
+                __WFILE__);
+      *code = -1;
+      return;
+    }
+
+    soundEngine->Register(i, filename);
+
+    delete[] filename;
+    filename = nullptr;
+  }
 
   nextSoundEvent =
       CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
