@@ -37,6 +37,7 @@ set(
   src/audiocore.h
   src/logloop.cpp
   src/logloop.h
+  src/types.h
   src/util.cpp
   src/util.h
 )

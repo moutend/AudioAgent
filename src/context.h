@@ -3,6 +3,8 @@
 #include <engine.h>
 #include <windows.h>
 
+#include "types.h"
+
 struct LogLoopContext {
   HANDLE FlushEvent = nullptr;
   const wchar_t *FullLogPath = nullptr;
