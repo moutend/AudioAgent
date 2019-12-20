@@ -96,9 +96,6 @@ DWORD WINAPI voiceLoop(LPVOID context) {
       }
     }
 
-    // The generated voice format is RIFF PCM wave, int32_t is enough to hold
-    // that data.
-
     int32_t waveLength{0};
 
     speechTask

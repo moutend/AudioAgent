@@ -49,44 +49,47 @@ DWORD WINAPI commandLoop(LPVOID context) {
     }
     switch (cmd->Type) {
     case 1:
+      Log->Info(L"Play sound", GetCurrentThreadId(), __LINE__, __WFILE__);
+
       ctx->SoundLoopCtx->SoundIndex = cmd->SoundIndex;
 
-      Log->Info(L"Send event (ctx->SoundLoopCtx->FeedEvent)",
-                GetCurrentThreadId(), __LINE__, __WFILE__);
-
       if (!SetEvent(ctx->SoundLoopCtx->FeedEvent)) {
-        Log->Fail(L"Failed to set feed event for sound loop",
-                  GetCurrentThreadId(), __LINE__, __WFILE__);
+        Log->Fail(L"Failed to set feed event", GetCurrentThreadId(), __LINE__,
+                  __WFILE__);
       }
 
       break;
     case 2:
+      Log->Info(L"Play silent", GetCurrentThreadId(), __LINE__, __WFILE__);
+
+      // TODO: implement me!
+
       break;
     case 3:
+      Log->Info(L"Play generated voice (TEXT)", GetCurrentThreadId(), __LINE__,
+                __WFILE__);
+
       ctx->VoiceLoopCtx->IsSSML = false;
       ctx->VoiceLoopCtx->BufferPtr = cmd->SSMLPtr;
       ctx->VoiceLoopCtx->BufferLen = cmd->SSMLLen;
 
-      Log->Info(L"Send event (ctx->VoiceLoopCtx->FeedEvent)",
-                GetCurrentThreadId(), __LINE__, __WFILE__);
-
       if (!SetEvent(ctx->VoiceLoopCtx->FeedEvent)) {
-        Log->Fail(L"Failed to set feed event for voice loop",
-                  GetCurrentThreadId(), __LINE__, __WFILE__);
+        Log->Fail(L"Failed to set feed event", GetCurrentThreadId(), __LINE__,
+                  __WFILE__);
       }
 
       break;
     case 4:
+      Log->Info(L"Play generated voice (SSML)", GetCurrentThreadId(), __LINE__,
+                __WFILE__);
+
       ctx->VoiceLoopCtx->IsSSML = true;
       ctx->VoiceLoopCtx->BufferPtr = cmd->SSMLPtr;
       ctx->VoiceLoopCtx->BufferLen = cmd->SSMLLen;
 
-      Log->Info(L"Send event (ctx->VoiceLoopCtx->FeedEvent)",
-                GetCurrentThreadId(), __LINE__, __WFILE__);
-
       if (!SetEvent(ctx->VoiceLoopCtx->FeedEvent)) {
-        Log->Fail(L"Failed to set feed event for voice loop",
-                  GetCurrentThreadId(), __LINE__, __WFILE__);
+        Log->Fail(L"Failed to set event", GetCurrentThreadId(), __LINE__,
+                  __WFILE__);
       }
 
       break;

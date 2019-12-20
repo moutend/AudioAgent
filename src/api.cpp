@@ -326,6 +326,9 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
     return;
   }
 
+  Log->Info(L"Complete setup audio node", GetCurrentThreadId(), __LINE__,
+            __WFILE__);
+
   isActive = true;
   *code = 0;
 }
@@ -341,13 +344,12 @@ void __stdcall Teardown(int32_t *code) {
     return;
   }
 
-  Log->Info(L"Send event (commandLoopCtx->QuitEvent)", GetCurrentThreadId(),
-            __LINE__, __WFILE__);
+  Log->Info(L"Teardown audio node", GetCurrentThreadId(), __LINE__, __WFILE__);
 
   if (!SetEvent(commandLoopCtx->QuitEvent)) {
-    Log->Fail(L"Failed to send quit event to command loop thread",
-              GetCurrentThreadId(), __LINE__, __WFILE__);
-    *code = -2;
+    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
+              __WFILE__);
+    *code = -1;
     return;
   }
 
@@ -355,13 +357,13 @@ void __stdcall Teardown(int32_t *code) {
   CloseHandle(commandLoopThread);
   commandLoopThread = nullptr;
 
-  Log->Info(L"Send event (voiceLoopCtx->QuitEvent)", GetCurrentThreadId(),
-            __LINE__, __WFILE__);
+  Log->Info(L"Delete command loop thread", GetCurrentThreadId(), __LINE__,
+            __WFILE__);
 
   if (!SetEvent(voiceLoopCtx->QuitEvent)) {
-    Log->Fail(L"Failed to send quit event to voice loop thread",
-              GetCurrentThreadId(), __LINE__, __WFILE__);
-    *code = -3;
+    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
+              __WFILE__);
+    *code = -1;
     return;
   }
 
@@ -369,13 +371,13 @@ void __stdcall Teardown(int32_t *code) {
   CloseHandle(voiceLoopThread);
   voiceLoopThread = nullptr;
 
-  Log->Info(L"Send event (voiceRenderCtx->QuitEvent)", GetCurrentThreadId(),
-            __LINE__, __WFILE__);
+  Log->Info(L"Delete voice loop thread", GetCurrentThreadId(), __LINE__,
+            __WFILE__);
 
   if (!SetEvent(voiceRenderCtx->QuitEvent)) {
-    Log->Fail(L"Failed to send quit event to voice render thread",
-              GetCurrentThreadId(), __LINE__, __WFILE__);
-    *code = -4;
+    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
+              __WFILE__);
+    *code = -1;
     return;
   }
 
@@ -383,13 +385,13 @@ void __stdcall Teardown(int32_t *code) {
   CloseHandle(voiceRenderThread);
   voiceRenderThread = nullptr;
 
-  Log->Info(L"Send event (soundLoopCtx->QuitEvent)", GetCurrentThreadId(),
-            __LINE__, __WFILE__);
+  Log->Info(L"Delete voice render thread", GetCurrentThreadId(), __LINE__,
+            __WFILE__);
 
   if (!SetEvent(soundLoopCtx->QuitEvent)) {
-    Log->Fail(L"Failed to send quit event to sound loop thread",
-              GetCurrentThreadId(), __LINE__, __WFILE__);
-    *code = -5;
+    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
+              __WFILE__);
+    *code = -1;
     return;
   }
 
@@ -397,19 +399,22 @@ void __stdcall Teardown(int32_t *code) {
   CloseHandle(soundLoopThread);
   soundLoopThread = nullptr;
 
-  Log->Info(L"Set event (soundRenderCtx->QuitEvent)", GetCurrentThreadId(),
-            __LINE__, __WFILE__);
+  Log->Info(L"Delete sound loop thread", GetCurrentThreadId(), __LINE__,
+            __WFILE__);
 
   if (!SetEvent(soundRenderCtx->QuitEvent)) {
-    Log->Fail(L"Failed to send quit event to sound render thread",
-              GetCurrentThreadId(), __LINE__, __WFILE__);
-    *code = -6;
+    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
+              __WFILE__);
+    *code = -1;
     return;
   }
 
   WaitForSingleObject(soundRenderThread, INFINITE);
   CloseHandle(soundRenderThread);
   soundRenderThread = nullptr;
+
+  Log->Info(L"Delete sound render thread", GetCurrentThreadId(), __LINE__,
+            __WFILE__);
 
   delete voiceEngine;
   voiceEngine = nullptr;
@@ -440,7 +445,7 @@ void __stdcall Teardown(int32_t *code) {
   delete soundLoopCtx;
   soundLoopCtx = nullptr;
 
-  Log->Info(L"All threads are destroied", GetCurrentThreadId(), __LINE__,
+  Log->Info(L"Complete teardown audio node", GetCurrentThreadId(), __LINE__,
             __WFILE__);
 
   Log = nullptr;
