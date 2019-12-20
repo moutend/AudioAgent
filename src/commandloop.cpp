@@ -22,10 +22,10 @@ DWORD WINAPI commandLoop(LPVOID context) {
   bool isActive{true};
 
   while (isActive) {
-    HANDLE waitArray[4] = {ctx->QuitEvent, ctx->CommandEvent,
+    HANDLE waitArray[5] = {ctx->QuitEvent, ctx->ForcePushEvent, ctx->PushEvent,
                            ctx->VoiceLoopCtx->NextEvent,
                            ctx->SoundLoopCtx->NextEvent};
-    DWORD waitResult = WaitForMultipleObjects(4, waitArray, FALSE, INFINITE);
+    DWORD waitResult = WaitForMultipleObjects(5, waitArray, FALSE, INFINITE);
 
     if (waitResult == WAIT_OBJECT_0 + 0) {
       Log->Info(L"Received quit event", GetCurrentThreadId(), __LINE__,
@@ -38,15 +38,21 @@ DWORD WINAPI commandLoop(LPVOID context) {
       continue;
     }
     switch (waitResult) {
-    case WAIT_OBJECT_0 + 1: // ctx->CommandEvent
+    case WAIT_OBJECT_0 + 1: // ctx->ForcePushEvent
       ctx->VoiceLoopCtx->VoiceEngine->FadeOut();
       ctx->SoundLoopCtx->SoundEngine->FadeOut();
-    case WAIT_OBJECT_0 + 2: // ctx->VoiceLoopContext->NextEvent
-    case WAIT_OBJECT_0 + 3: // ctx->SoundLoopContext->NextEvent
-      cmd = ctx->Commands[ctx->ReadIndex];
-      ctx->ReadIndex = (ctx->ReadIndex + 1) % ctx->MaxCommands;
+      break;
+    case WAIT_OBJECT_0 + 2: // ctx->PushEvent
+      if (ctx->ReadIndex != ctx->WriteIndex) {
+        continue;
+      }
+
       break;
     }
+
+    cmd = ctx->Commands[ctx->ReadIndex];
+    ctx->ReadIndex = (ctx->ReadIndex + 1) % ctx->MaxCommands;
+
     switch (cmd->Type) {
     case 1:
       Log->Info(L"Play sound", GetCurrentThreadId(), __LINE__, __WFILE__);

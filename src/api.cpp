@@ -279,10 +279,20 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
 
   commandLoopCtx = new CommandLoopContext();
 
-  commandLoopCtx->CommandEvent =
+  commandLoopCtx->ForcePushEvent =
       CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
 
-  if (commandLoopCtx->CommandEvent == nullptr) {
+  if (commandLoopCtx->ForcePushEvent == nullptr) {
+    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LINE__,
+              __WFILE__);
+    *code = -1;
+    return;
+  }
+
+  commandLoopCtx->PushEvent =
+      CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
+
+  if (commandLoopCtx->PushEvent == nullptr) {
     Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LINE__,
               __WFILE__);
     *code = -1;
@@ -542,7 +552,7 @@ void __stdcall ForcePush(int32_t *code, Command **commandsPtr,
 
   commandLoopCtx->ReadIndex = base;
 
-  if (!SetEvent(commandLoopCtx->CommandEvent)) {
+  if (!SetEvent(commandLoopCtx->ForcePushEvent)) {
     Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
               __WFILE__);
     *code = -1;
@@ -603,7 +613,7 @@ void __stdcall Push(int32_t *code, Command **commandsPtr,
 
   // commandLoopCtx->ReadIndex = base;
 
-  if (!SetEvent(commandLoopCtx->CommandEvent)) {
+  if (!SetEvent(commandLoopCtx->PushEvent)) {
     Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
               __WFILE__);
     *code = -1;

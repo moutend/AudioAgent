@@ -46,7 +46,8 @@ struct SoundLoopContext {
 };
 
 struct CommandLoopContext {
-  HANDLE CommandEvent = nullptr;
+  HANDLE PushEvent = nullptr;
+  HANDLE ForcePushEvent = nullptr;
   HANDLE QuitEvent = nullptr;
   VoiceLoopContext *VoiceLoopCtx = nullptr;
   SoundLoopContext *SoundLoopCtx = nullptr;
