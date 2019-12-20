@@ -19,6 +19,7 @@
 
 extern Logger::Logger *Log;
 
+int16_t maxWaves = 128;
 bool isActive{false};
 std::mutex apiMutex;
 
@@ -184,20 +185,24 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
     return;
   }
 
-  soundEngine = new PCMAudio::LauncherEngine();
+  soundEngine = new PCMAudio::LauncherEngine(maxWaves);
 
-  for (int i = 0; i < 128; i++) {
+  for (int16_t i = 0; i < maxWaves; i++) {
     wchar_t *filename = new wchar_t[256]{};
     HRESULT hr = StringCbPrintfW(filename, 255, L"waves\\%03d.wav", i + 1);
 
     if (FAILED(hr)) {
       Log->Fail(L"Failed to build filename", GetCurrentThreadId(), __LINE__,
                 __WFILE__);
-      *code = -1;
-      return;
+      continue;
+    }
+    if (!soundEngine->Register(i, filename)) {
+      Log->Fail(L"Failed to register", GetCurrentThreadId(), __LINE__,
+                __WFILE__);
+      continue;
     }
 
-    soundEngine->Register(i, filename);
+    Log->Info(filename, GetCurrentThreadId(), __LINE__, __WFILE__);
 
     delete[] filename;
     filename = nullptr;
