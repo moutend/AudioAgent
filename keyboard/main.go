@@ -74,8 +74,11 @@ func main() {
 				if err != nil {
 					log.Fatal(err)
 				}
-				go http.Post("http://192.168.1.107:4000/v1/audio/command", contentType, bytes.NewBuffer(data))
-				go http.Post("http://192.168.1.107:4000/sound/command", contentType, nil)
+				if ev.Ch == []rune("1")[0] {
+					go http.Post("http://192.168.1.107:4000/v1/audio/command", contentType, bytes.NewBuffer(data))
+				} else {
+					go http.Post("http://192.168.1.107:4000/v1/audio/command?force=true", contentType, bytes.NewBuffer(data))
+				}
 			}
 		}
 	}

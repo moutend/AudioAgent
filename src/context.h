@@ -7,7 +7,7 @@
 
 struct LogLoopContext {
   HANDLE FlushEvent = nullptr;
-  const wchar_t *FullLogPath = nullptr;
+  wchar_t *FullLogPath = nullptr;
 };
 
 struct VoiceProperty {
