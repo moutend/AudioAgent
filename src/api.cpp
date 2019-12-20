@@ -601,7 +601,7 @@ void __stdcall Push(int32_t *code, Command **commandsPtr,
         (commandLoopCtx->WriteIndex + 1) % commandLoopCtx->MaxCommands;
   }
 
-  commandLoopCtx->ReadIndex = base;
+  // commandLoopCtx->ReadIndex = base;
 
   if (!SetEvent(commandLoopCtx->CommandEvent)) {
     Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
