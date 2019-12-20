@@ -26,7 +26,9 @@ DWORD WINAPI soundLoop(LPVOID context) {
 
     switch (waitResult) {
     case WAIT_OBJECT_0 + 0: // ctx->FeedEvent
-      ctx->SoundEngine->Feed(ctx->SoundIndex);
+      if (!ctx->SoundEngine->Feed(ctx->SoundIndex) {
+        Log->Warn(L"Failed to feed", GetCurrentThreadId(), __LINE__, __WFILE__);
+      }
       break;
     case WAIT_OBJECT_0 + 1: // ctx->QuitEvent
       isActive = false;
