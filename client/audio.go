@@ -39,6 +39,12 @@ const (
 )
 
 func postAudioCommand(w http.ResponseWriter, r *http.Request) error {
+	isForcePush := false
+
+	if r.URL.Query().Get("force") != "" {
+		isForcePush = true
+	}
+
 	buf := &bytes.Buffer{}
 
 	if _, err := io.Copy(buf, r.Body); err != nil {
@@ -109,10 +115,18 @@ func postAudioCommand(w http.ResponseWriter, r *http.Request) error {
 	var code int32
 
 	if len(rawCommands) > 0 {
-		procFeed.Call(uintptr(unsafe.Pointer(&code)), uintptr(unsafe.Pointer(&rawCommands[0])), uintptr(len(rawCommands)))
+		if isForcePush {
+			procForcePush.Call(uintptr(unsafe.Pointer(&code)), uintptr(unsafe.Pointer(&rawCommands[0])), uintptr(len(rawCommands)))
+		} else {
+			procPush.Call(uintptr(unsafe.Pointer(&code)), uintptr(unsafe.Pointer(&rawCommands[0])), uintptr(len(rawCommands)))
+		}
 	}
 	if code != 0 {
-		logger.Printf("Failed to call Feed (code=%v)", code)
+		if isForcePush {
+			logger.Printf("Failed to call ForcePush(code=%v)", code)
+		} else {
+			logger.Printf("Failed to call Push (code=%v)", code)
+		}
 		return fmt.Errorf("Internal error")
 	}
 	if _, err := io.WriteString(w, "{}"); err != nil {
@@ -168,10 +182,10 @@ func getAudioEnable(w http.ResponseWriter, r *http.Request) error {
 
 	var code int32
 
-	procStart.Call(uintptr(unsafe.Pointer(&code)), uintptr(unsafe.Pointer(fullLogPathU16ptr)), uintptr(0))
+	procSetup.Call(uintptr(unsafe.Pointer(&code)), uintptr(unsafe.Pointer(fullLogPathU16ptr)), uintptr(0))
 
 	if code != 0 {
-		logger.Printf("Failed to call Start()")
+		logger.Printf("Failed to call Setup()")
 		return fmt.Errorf("Internal error")
 	}
 	if _, err := io.WriteString(w, "{}"); err != nil {
@@ -184,10 +198,10 @@ func getAudioEnable(w http.ResponseWriter, r *http.Request) error {
 func getAudioDisable(w http.ResponseWriter, r *http.Request) error {
 	var code int32
 
-	procQuit.Call(uintptr(unsafe.Pointer(&code)))
+	procTeardown.Call(uintptr(unsafe.Pointer(&code)))
 
 	if code != 0 {
-		logger.Println("Failed to call Quit (code=%v)", code)
+		logger.Println("Failed to call Teardown (code=%v)", code)
 		return fmt.Errorf("Internal error")
 	}
 	if _, err := io.WriteString(w, "{}"); err != nil {

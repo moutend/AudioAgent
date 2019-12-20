@@ -11,11 +11,12 @@ var (
 	logPath = ""
 	dll     = syscall.NewLazyDLL("AudioNode.dll")
 
-	procStart                     = dll.NewProc("Start")
-	procQuit                      = dll.NewProc("Quit")
+	procSetup                     = dll.NewProc("Setup")
+	procTeardown                  = dll.NewProc("Teardown")
 	procFadeIn                    = dll.NewProc("FadeIn")
 	procFadeOut                   = dll.NewProc("FadeOut")
-	procFeed                      = dll.NewProc("Feed")
+	procForcePush                 = dll.NewProc("ForcePush")
+	procPush                      = dll.NewProc("Push")
 	procGetVoiceCount             = dll.NewProc("GetVoiceCount")
 	procGetVoiceId                = dll.NewProc("GetVoiceId")
 	procGetVoiceIdLength          = dll.NewProc("GetVoiceIdLength")
