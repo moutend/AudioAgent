@@ -30,17 +30,6 @@ DWORD WINAPI commandLoop(LPVOID context) {
                            ctx->SoundLoopCtx->NextEvent};
     DWORD waitResult = WaitForMultipleObjects(4, waitArray, FALSE, INFINITE);
 
-    wchar_t *msg = new wchar_t[256]{};
-
-    HRESULT hr = StringCbPrintfW(msg, 255, L"Command loop Read=%d,Write=%d",
-                                 ctx->ReadIndex, ctx->WriteIndex);
-
-    if (FAILED(hr)) {
-      continue;
-    }
-
-    Log->Info(msg, GetCurrentThreadId(), __LINE__, __WFILE__);
-
     if (waitResult == WAIT_OBJECT_0 + 0) {
       isActive = false;
       continue;
