@@ -507,7 +507,21 @@ void __stdcall Push(int32_t *code, Command **commandsPtr,
     return;
   }
 
-  Log->Info(L"Called Push()", GetCurrentThreadId(), __LINE__, __WFILE__);
+  wchar_t *msg = new wchar_t[256]{};
+
+  HRESULT hr = StringCbPrintfW(
+      msg, 255, L"Called Push Read=%d,Write=%d,IsForce=%d",
+      commandLoopCtx->ReadIndex, commandLoopCtx->WriteIndex, isForcePush);
+
+  if (FAILED(hr)) {
+    *code = -1;
+    return;
+  }
+
+  Log->Info(msg, GetCurrentThreadId(), __LINE__, __WFILE__);
+
+  delete[] msg;
+  msg = nullptr;
 
   bool isIdle = commandLoopCtx->ReadIndex == commandLoopCtx->WriteIndex;
   int32_t base = commandLoopCtx->WriteIndex;
