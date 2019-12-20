@@ -491,69 +491,8 @@ void __stdcall FadeOut(int32_t *code) {
   *code = 0;
 }
 
-void __stdcall ForcePush(int32_t *code, Command **commandsPtr,
-                         int32_t commandsLength) {
-  std::lock_guard<std::mutex> lock(apiMutex);
-
-  if (code == nullptr) {
-    return;
-  }
-  if (!isActive) {
-    *code = -1;
-    return;
-  }
-  if (commandsPtr == nullptr || commandsLength <= 0) {
-    *code = -1;
-    return;
-  }
-
-  Log->Info(L"Called ForcePush()", GetCurrentThreadId(), __LINE__, __WFILE__);
-
-  int32_t base = commandLoopCtx->WriteIndex;
-
-  for (int32_t i = 0; i < commandsLength; i++) {
-    int32_t offset = (base + i) % commandLoopCtx->MaxCommands;
-
-    commandLoopCtx->Commands[offset]->Type = commandsPtr[i]->Type;
-
-    switch (commandsPtr[i]->Type) {
-    case 1:
-      commandLoopCtx->Commands[offset]->SoundIndex = commandsPtr[i]->SoundIndex;
-      break;
-    case 2:
-      commandLoopCtx->Commands[offset]->WaitDuration =
-          commandsPtr[i]->WaitDuration;
-      break;
-    case 3:
-      delete[] commandLoopCtx->Commands[offset]->SSMLPtr;
-      commandLoopCtx->Commands[offset]->SSMLPtr = nullptr;
-      commandLoopCtx->Commands[offset]->SSMLPtr =
-          new wchar_t[commandsPtr[i]->SSMLLen];
-      std::wmemcpy(commandLoopCtx->Commands[offset]->SSMLPtr,
-                   commandsPtr[i]->SSMLPtr, commandsPtr[i]->SSMLLen);
-      commandLoopCtx->Commands[offset]->SSMLLen = commandsPtr[i]->SSMLLen;
-
-      break;
-    }
-
-    commandLoopCtx->WriteIndex =
-        (commandLoopCtx->WriteIndex + 1) % commandLoopCtx->MaxCommands;
-  }
-
-  commandLoopCtx->ReadIndex = base;
-
-  if (!SetEvent(commandLoopCtx->PushEvent)) {
-    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
-    *code = -1;
-    return;
-  }
-
-  *code = 0;
-}
-
 void __stdcall Push(int32_t *code, Command **commandsPtr,
-                    int32_t commandsLength) {
+                    int32_t commandsLength, bool isForcePush) {
   std::lock_guard<std::mutex> lock(apiMutex);
 
   if (code == nullptr) {
@@ -564,7 +503,7 @@ void __stdcall Push(int32_t *code, Command **commandsPtr,
     return;
   }
   if (commandsPtr == nullptr || commandsLength <= 0) {
-    *code = -2;
+    *code = -1;
     return;
   }
 
@@ -602,9 +541,10 @@ void __stdcall Push(int32_t *code, Command **commandsPtr,
         (commandLoopCtx->WriteIndex + 1) % commandLoopCtx->MaxCommands;
   }
 
-  // commandLoopCtx->ReadIndex = base;
-
-  if (!isIdle) {
+  if (isForcePush) {
+    commandLoopCtx->ReadIndex = base;
+  }
+  if (!isForcePush && !isIdle) {
     *code = 0;
     return;
   }
