@@ -25,7 +25,7 @@ DWORD WINAPI commandLoop(LPVOID context) {
     HANDLE waitArray[4] = {ctx->QuitEvent, ctx->PushEvent,
                            ctx->VoiceLoopCtx->NextEvent,
                            ctx->SoundLoopCtx->NextEvent};
-    DWORD waitResult = WaitForMultipleObjects(5, waitArray, FALSE, INFINITE);
+    DWORD waitResult = WaitForMultipleObjects(4, waitArray, FALSE, INFINITE);
 
     if (waitResult == WAIT_OBJECT_0 + 0) {
       isActive = false;
