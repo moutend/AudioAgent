@@ -1,8 +1,11 @@
 #include <cpplogger.h>
+#include <windows.h>
 
 #include "commandloop.h"
 #include "context.h"
 #include "util.h"
+
+#include <strsafe.h>
 
 extern Logger::Logger *Log;
 
