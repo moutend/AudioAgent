@@ -15,7 +15,7 @@ export void __stdcall FadeIn(int32_t *code);
 export void __stdcall FadeOut(int32_t *code);
 
 export void __stdcall Push(int32_t *code, Command **commandsPtr,
-                           int32_t commandsLength, bool isForcePush);
+                           int32_t commandsLength, int32_t isForcePush);
 
 export void __stdcall GetVoiceCount(int32_t *code, int32_t *numberOfVoices);
 

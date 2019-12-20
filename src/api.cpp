@@ -492,7 +492,7 @@ void __stdcall FadeOut(int32_t *code) {
 }
 
 void __stdcall Push(int32_t *code, Command **commandsPtr,
-                    int32_t commandsLength, bool isForcePush) {
+                    int32_t commandsLength, int32_t isForcePush) {
   std::lock_guard<std::mutex> lock(apiMutex);
 
   if (code == nullptr) {
