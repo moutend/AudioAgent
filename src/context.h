@@ -54,7 +54,7 @@ struct CommandLoopContext {
   bool IsIdle = true;
   int32_t ReadIndex = 0;
   int32_t WriteIndex = 0;
-  int32_t MaxCommands = 1024;
+  int32_t MaxCommands = 256;
 };
 
 struct AudioLoopContext {
