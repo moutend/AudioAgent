@@ -46,23 +46,29 @@ func main() {
 				go http.Get("http://192.168.1.107:4000/v1/audio/disable")
 			case termbox.KeySpace:
 			default:
+				v := 0
+
 				if ev.Ch == []rune("j")[0] {
+					v = 55
 					go http.Post("http://192.168.1.107:4000/v1/voice/pitch?diff=-0.05", contentType, nil)
 				}
 				if ev.Ch == []rune("k")[0] {
+					v = 56
 					go http.Post("http://192.168.1.107:4000/v1/voice/pitch?diff=0.05", contentType, nil)
 				}
 				if ev.Ch == []rune("h")[0] {
+					v = 66
 					go http.Post("http://192.168.1.107:4000/v1/voice/rate?diff=-0.05", contentType, nil)
 				}
 				if ev.Ch == []rune("l")[0] {
+					v = 42
 					go http.Post("http://192.168.1.107:4000/v1/voice/rate?diff=0.05", contentType, nil)
 				}
 				cmd := commandRequest{
 					Commands: []command{
 						{
 							Type:  1,
-							Value: 0,
+							Value: v,
 						},
 						{
 							Type:  3,
