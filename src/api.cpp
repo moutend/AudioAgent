@@ -510,7 +510,7 @@ void __stdcall Push(int32_t *code, Command **commandsPtr,
   Log->Info(L"Called Push()", GetCurrentThreadId(), __LINE__, __WFILE__);
 
   bool isIdle = commandLoopCtx->ReadIndex == commandLoopCtx->WriteIndex;
-  int32_t base = commandLoopCtx->WriteIndex;
+  int32_t base = commandLoopCtx->WriteIndex + 1;
 
   for (int32_t i = 0; i < commandsLength; i++) {
     int32_t offset = (base + i) % commandLoopCtx->MaxCommands;
