@@ -463,12 +463,13 @@ void __stdcall FadeIn(int32_t *code) {
     *code = -1;
     return;
   }
-  if (Log != nullptr) {
-    Log->Info(L"Called FadeIn", GetCurrentThreadId(), __LINE__, __WFILE__);
-  }
+
+  Log->Info(L"Called FadeIn()", GetCurrentThreadId(), __LINE__, __WFILE__);
 
   voiceEngine->FadeIn();
   soundEngine->FadeIn();
+
+  *code = 0;
 }
 
 void __stdcall FadeOut(int32_t *code) {
@@ -481,16 +482,17 @@ void __stdcall FadeOut(int32_t *code) {
     *code = -1;
     return;
   }
-  if (Log != nullptr) {
-    Log->Info(L"Called FadeOut", GetCurrentThreadId(), __LINE__, __WFILE__);
-  }
+
+  Log->Info(L"Called FadeOut()", GetCurrentThreadId(), __LINE__, __WFILE__);
 
   voiceEngine->FadeOut();
   soundEngine->FadeOut();
+
+  *code = 0;
 }
 
-void __stdcall Feed(int32_t *code, Command **commandsPtr,
-                    int32_t commandsLength) {
+void __stdcall ForcePush(int32_t *code, Command **commandsPtr,
+                         int32_t commandsLength) {
   std::lock_guard<std::mutex> lock(apiMutex);
 
   if (code == nullptr) {
@@ -501,12 +503,11 @@ void __stdcall Feed(int32_t *code, Command **commandsPtr,
     return;
   }
   if (commandsPtr == nullptr || commandsLength <= 0) {
-    *code = -2;
+    *code = -1;
     return;
   }
-  if (Log != nullptr) {
-    Log->Info(L"Called Feed", GetCurrentThreadId(), __LINE__, __WFILE__);
-  }
+
+  Log->Info(L"Called ForcePush()", GetCurrentThreadId(), __LINE__, __WFILE__);
 
   int32_t base = commandLoopCtx->WriteIndex;
 
@@ -542,34 +543,94 @@ void __stdcall Feed(int32_t *code, Command **commandsPtr,
   commandLoopCtx->ReadIndex = base;
 
   if (!SetEvent(commandLoopCtx->CommandEvent)) {
-    Log->Fail(L"Failed to set command event", GetCurrentThreadId(), __LINE__,
+    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
               __WFILE__);
-    *code = -3;
+    *code = -1;
     return;
   }
+
+  *code = 0;
+}
+
+void __stdcall Push(int32_t *code, Command **commandsPtr,
+                    int32_t commandsLength) {
+  std::lock_guard<std::mutex> lock(apiMutex);
+
+  if (code == nullptr) {
+    return;
+  }
+  if (!isActive) {
+    *code = -1;
+    return;
+  }
+  if (commandsPtr == nullptr || commandsLength <= 0) {
+    *code = -2;
+    return;
+  }
+
+  Log->Info(L"Called Push()", GetCurrentThreadId(), __LINE__, __WFILE__);
+
+  int32_t base = commandLoopCtx->WriteIndex;
+
+  for (int32_t i = 0; i < commandsLength; i++) {
+    int32_t offset = (base + i) % commandLoopCtx->MaxCommands;
+
+    commandLoopCtx->Commands[offset]->Type = commandsPtr[i]->Type;
+
+    switch (commandsPtr[i]->Type) {
+    case 1:
+      commandLoopCtx->Commands[offset]->SoundIndex = commandsPtr[i]->SoundIndex;
+      break;
+    case 2:
+      commandLoopCtx->Commands[offset]->WaitDuration =
+          commandsPtr[i]->WaitDuration;
+      break;
+    case 3:
+      delete[] commandLoopCtx->Commands[offset]->SSMLPtr;
+      commandLoopCtx->Commands[offset]->SSMLPtr = nullptr;
+      commandLoopCtx->Commands[offset]->SSMLPtr =
+          new wchar_t[commandsPtr[i]->SSMLLen];
+      std::wmemcpy(commandLoopCtx->Commands[offset]->SSMLPtr,
+                   commandsPtr[i]->SSMLPtr, commandsPtr[i]->SSMLLen);
+      commandLoopCtx->Commands[offset]->SSMLLen = commandsPtr[i]->SSMLLen;
+
+      break;
+    }
+
+    commandLoopCtx->WriteIndex =
+        (commandLoopCtx->WriteIndex + 1) % commandLoopCtx->MaxCommands;
+  }
+
+  commandLoopCtx->ReadIndex = base;
+
+  if (!SetEvent(commandLoopCtx->CommandEvent)) {
+    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
+              __WFILE__);
+    *code = -1;
+    return;
+  }
+
+  *code = 0;
 }
 
 void __stdcall GetVoiceCount(int32_t *code, int32_t *numberOfVoices) {
   if (code == nullptr) {
     return;
   }
-
-  *code = 0;
-
   if (numberOfVoices == nullptr) {
     *code = -1;
     return;
   }
   if (voiceInfoCtx == nullptr) {
-    *code = -2;
+    *code = -1;
     return;
   }
-  if (Log != nullptr) {
-    Log->Info(L"Called GetVoiceCount", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
-  }
+
+  Log->Info(L"Called GetVoiceCount()", GetCurrentThreadId(), __LINE__,
+            __WFILE__);
 
   *numberOfVoices = voiceInfoCtx->Count;
+  *code = 0;
 }
 
 void __stdcall GetVoiceDisplayName(int32_t *code, int32_t index,
@@ -577,9 +638,6 @@ void __stdcall GetVoiceDisplayName(int32_t *code, int32_t index,
   if (code == nullptr) {
     return;
   }
-
-  *code = 0;
-
   if (voiceInfoCtx == nullptr) {
     *code = -1;
     return;
@@ -589,7 +647,7 @@ void __stdcall GetVoiceDisplayName(int32_t *code, int32_t index,
     return;
   }
   if (voiceInfoCtx->VoiceProperties == nullptr) {
-    *code = -3;
+    *code = -1;
     return;
   }
 
@@ -598,12 +656,11 @@ void __stdcall GetVoiceDisplayName(int32_t *code, int32_t index,
       StringCbPrintfW(s, 256, L"Called GetVoiceDisplayName (index=%d)", index);
 
   if (FAILED(hr)) {
-    *code = -4;
+    *code = -1;
     return;
   }
-  if (Log != nullptr) {
-    Log->Info(s, GetCurrentThreadId(), __LINE__, __WFILE__);
-  }
+
+  Log->Info(s, GetCurrentThreadId(), __LINE__, __WFILE__);
 
   delete[] s;
   s = nullptr;
@@ -612,6 +669,7 @@ void __stdcall GetVoiceDisplayName(int32_t *code, int32_t index,
       wcslen(voiceInfoCtx->VoiceProperties[index]->DisplayName);
   std::wmemcpy(displayName, voiceInfoCtx->VoiceProperties[index]->DisplayName,
                displayNameLength);
+  *code = 0;
 }
 
 void __stdcall GetVoiceDisplayNameLength(int32_t *code, int32_t index,
