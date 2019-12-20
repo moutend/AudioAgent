@@ -15,7 +15,6 @@ var (
 	procTeardown                  = dll.NewProc("Teardown")
 	procFadeIn                    = dll.NewProc("FadeIn")
 	procFadeOut                   = dll.NewProc("FadeOut")
-	procForcePush                 = dll.NewProc("ForcePush")
 	procPush                      = dll.NewProc("Push")
 	procGetVoiceCount             = dll.NewProc("GetVoiceCount")
 	procGetVoiceId                = dll.NewProc("GetVoiceId")

@@ -39,10 +39,10 @@ const (
 )
 
 func postAudioCommand(w http.ResponseWriter, r *http.Request) error {
-	isForcePush := false
+	var isForcePush int32
 
 	if r.URL.Query().Get("force") != "" {
-		isForcePush = true
+		isForcePush = 1
 	}
 
 	buf := &bytes.Buffer{}
@@ -115,18 +115,10 @@ func postAudioCommand(w http.ResponseWriter, r *http.Request) error {
 	var code int32
 
 	if len(rawCommands) > 0 {
-		if isForcePush {
-			procForcePush.Call(uintptr(unsafe.Pointer(&code)), uintptr(unsafe.Pointer(&rawCommands[0])), uintptr(len(rawCommands)))
-		} else {
-			procPush.Call(uintptr(unsafe.Pointer(&code)), uintptr(unsafe.Pointer(&rawCommands[0])), uintptr(len(rawCommands)))
-		}
+		procPush.Call(uintptr(unsafe.Pointer(&code)), uintptr(unsafe.Pointer(&rawCommands[0])), uintptr(len(rawCommands)), uintptr(isForcePush))
 	}
 	if code != 0 {
-		if isForcePush {
-			logger.Printf("Failed to call ForcePush(code=%v)", code)
-		} else {
-			logger.Printf("Failed to call Push (code=%v)", code)
-		}
+		logger.Printf("Failed to call Push (code=%v)", code)
 		return fmt.Errorf("Internal error")
 	}
 	if _, err := io.WriteString(w, "{}"); err != nil {
