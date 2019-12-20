@@ -524,7 +524,9 @@ void __stdcall Push(int32_t *code, Command **commandsPtr,
   msg = nullptr;
 
   bool isIdle = commandLoopCtx->IsIdle;
-  int32_t base = (commandLoopCtx->WriteIndex + 1) % commandLoopCtx->MaxCommands;
+  int32_t base = commandLoopCtx->WriteIndex;
+  // int32_t base = (commandLoopCtx->WriteIndex + 1) %
+  // commandLoopCtx->MaxCommands;
 
   for (int32_t i = 0; i < commandsLength; i++) {
     int32_t offset = (base + i) % commandLoopCtx->MaxCommands;
