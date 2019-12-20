@@ -22,15 +22,12 @@ DWORD WINAPI commandLoop(LPVOID context) {
   bool isActive{true};
 
   while (isActive) {
-    HANDLE waitArray[5] = {ctx->QuitEvent, ctx->ForcePushEvent, ctx->PushEvent,
+    HANDLE waitArray[4] = {ctx->QuitEvent, ctx->PushEvent,
                            ctx->VoiceLoopCtx->NextEvent,
                            ctx->SoundLoopCtx->NextEvent};
     DWORD waitResult = WaitForMultipleObjects(5, waitArray, FALSE, INFINITE);
 
     if (waitResult == WAIT_OBJECT_0 + 0) {
-      Log->Info(L"Received quit event", GetCurrentThreadId(), __LINE__,
-                __WFILE__);
-
       isActive = false;
       continue;
     }
@@ -38,15 +35,9 @@ DWORD WINAPI commandLoop(LPVOID context) {
       continue;
     }
     switch (waitResult) {
-    case WAIT_OBJECT_0 + 1: // ctx->ForcePushEvent
+    case WAIT_OBJECT_0 + 1: // ctx->PushEvent
       ctx->VoiceLoopCtx->VoiceEngine->FadeOut();
       ctx->SoundLoopCtx->SoundEngine->FadeOut();
-      break;
-    case WAIT_OBJECT_0 + 2: // ctx->PushEvent
-      if (ctx->ReadIndex != ctx->WriteIndex) {
-        continue;
-      }
-
       break;
     }
 
