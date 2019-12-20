@@ -51,9 +51,10 @@ struct CommandLoopContext {
   VoiceLoopContext *VoiceLoopCtx = nullptr;
   SoundLoopContext *SoundLoopCtx = nullptr;
   Command **Commands = nullptr;
+  bool IsIdle = true;
   int32_t ReadIndex = 0;
   int32_t WriteIndex = 0;
-  int32_t MaxCommands = 256;
+  int32_t MaxCommands = 1024;
 };
 
 struct AudioLoopContext {

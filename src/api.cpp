@@ -523,7 +523,7 @@ void __stdcall Push(int32_t *code, Command **commandsPtr,
   delete[] msg;
   msg = nullptr;
 
-  bool isIdle = commandLoopCtx->ReadIndex == commandLoopCtx->WriteIndex;
+  bool isIdle = commandLoopCtx->IsIdle;
   int32_t base = commandLoopCtx->WriteIndex;
 
   for (int32_t i = 0; i < commandsLength; i++) {
@@ -569,6 +569,7 @@ void __stdcall Push(int32_t *code, Command **commandsPtr,
     return;
   }
 
+  commandLoopCtx->IsIdle = false;
   *code = 0;
 }
 

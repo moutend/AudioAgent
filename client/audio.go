@@ -52,6 +52,7 @@ func postAudioCommand(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("Requested JSON is broken")
 	}
 
+	logger.Printf("body=%s\n", buf.Bytes())
 	var req postCommandRequest
 
 	if err := json.Unmarshal(buf.Bytes(), &req); err != nil {

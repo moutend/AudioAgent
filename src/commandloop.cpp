@@ -32,6 +32,7 @@ DWORD WINAPI commandLoop(LPVOID context) {
       continue;
     }
     if (ctx->ReadIndex == ctx->WriteIndex) {
+      ctx->IsIdle = true;
       continue;
     }
     switch (waitResult) {
