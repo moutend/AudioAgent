@@ -30,8 +30,8 @@ struct VoiceLoopContext {
   HANDLE NextEvent = nullptr;
   HANDLE QuitEvent = nullptr;
   bool IsSSML = false;
-  wchar_t *BufferPtr = nullptr;
-  int32_t BufferLen = 0;
+  wchar_t *Text = nullptr;
+  // int32_t textLen = 0;
   PCMAudio::RingEngine *VoiceEngine = nullptr;
   unsigned int VoiceCount = 0;
   VoiceInfoContext *VoiceInfoCtx = nullptr;
@@ -41,8 +41,8 @@ struct SoundLoopContext {
   HANDLE FeedEvent = nullptr;
   HANDLE NextEvent = nullptr;
   HANDLE QuitEvent = nullptr;
-  int16_t SoundIndex = 0;
-  double SilenceDuration = 0.0;
+  int16_t SFXIndex = 0;
+  double WaitDuration = 0.0;
   PCMAudio::LauncherEngine *SoundEngine = nullptr;
 };
 

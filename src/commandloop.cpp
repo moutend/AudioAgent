@@ -50,10 +50,9 @@ DWORD WINAPI commandLoop(LPVOID context) {
 
     switch (cmd->Type) {
     case 1:
-      Log->Info(L"Play sound", GetCurrentThreadId(), __LINE__, __WFILE__);
+      Log->Info(L"Play SFX", GetCurrentThreadId(), __LINE__, __WFILE__);
 
-      ctx->SoundLoopCtx->SoundIndex = cmd->SoundIndex;
-      ctx->SoundLoopCtx->SilenceDuration = 0.0;
+      ctx->SoundLoopCtx->SFXIndex = cmd->SFXIndex;
 
       if (!SetEvent(ctx->SoundLoopCtx->FeedEvent)) {
         Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
@@ -62,10 +61,10 @@ DWORD WINAPI commandLoop(LPVOID context) {
 
       break;
     case 2:
-      Log->Info(L"Play silence", GetCurrentThreadId(), __LINE__, __WFILE__);
+      Log->Info(L"Wait", GetCurrentThreadId(), __LINE__, __WFILE__);
 
       ctx->SoundLoopCtx->SoundIndex = -1;
-      ctx->SoundLoopCtx->SilenceDuration = cmd->WaitDuration;
+      ctx->SoundLoopCtx->WaitDuration = cmd->WaitDuration;
 
       if (!SetEvent(ctx->SoundLoopCtx->FeedEvent)) {
         Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
@@ -74,12 +73,11 @@ DWORD WINAPI commandLoop(LPVOID context) {
 
       break;
     case 3:
-      Log->Info(L"Play generated voice (TEXT)", GetCurrentThreadId(), __LINE__,
-                __WFILE__);
+      Log->Info(L"Play voice generated from plain text", GetCurrentThreadId(),
+                __LINE__, __WFILE__);
 
       ctx->VoiceLoopCtx->IsSSML = false;
-      ctx->VoiceLoopCtx->BufferPtr = cmd->SSMLPtr;
-      ctx->VoiceLoopCtx->BufferLen = cmd->SSMLLen;
+      ctx->VoiceLoopCtx->Text = cmd->Text;
 
       if (!SetEvent(ctx->VoiceLoopCtx->FeedEvent)) {
         Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
@@ -88,12 +86,11 @@ DWORD WINAPI commandLoop(LPVOID context) {
 
       break;
     case 4:
-      Log->Info(L"Play generated voice (SSML)", GetCurrentThreadId(), __LINE__,
-                __WFILE__);
+      Log->Info(L"Play voice generated from SSML", GetCurrentThreadId(),
+                __LINE__, __WFILE__);
 
       ctx->VoiceLoopCtx->IsSSML = true;
-      ctx->VoiceLoopCtx->BufferPtr = cmd->SSMLPtr;
-      ctx->VoiceLoopCtx->BufferLen = cmd->SSMLLen;
+      ctx->VoiceLoopCtx->Text = cmd->Text;
 
       if (!SetEvent(ctx->VoiceLoopCtx->FeedEvent)) {
         Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,

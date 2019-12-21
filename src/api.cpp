@@ -538,22 +538,26 @@ void __stdcall Push(int32_t *code, Command **commandsPtr,
 
     switch (commandsPtr[i]->Type) {
     case 1:
-      commandLoopCtx->Commands[offset]->SoundIndex = commandsPtr[i]->SoundIndex;
+      commandLoopCtx->Commands[offset]->SFXIndex = commandsPtr[i]->SFXIndex;
       break;
     case 2:
       commandLoopCtx->Commands[offset]->WaitDuration =
           commandsPtr[i]->WaitDuration;
       break;
-    case 3:
-      delete[] commandLoopCtx->Commands[offset]->SSMLPtr;
-      commandLoopCtx->Commands[offset]->SSMLPtr = nullptr;
-      commandLoopCtx->Commands[offset]->SSMLPtr =
-          new wchar_t[commandsPtr[i]->SSMLLen];
-      std::wmemcpy(commandLoopCtx->Commands[offset]->SSMLPtr,
-                   commandsPtr[i]->SSMLPtr, commandsPtr[i]->SSMLLen);
-      commandLoopCtx->Commands[offset]->SSMLLen = commandsPtr[i]->SSMLLen;
+    case 3: // Generate voice from plain text
+    case 4: // Generate voice from SSML
+      delete[] commandLoopCtx->Commands[offset]->Text;
+      commandLoopCtx->Commands[offset]->Text = nullptr;
+
+      size_t textLen = std::wcslen(commandsPtr[i]->Text) + 1;
+      commandLoopCtx->Commands[offset]->Text = new wchar_t[textLen];
+      std::wmemcpy(commandLoopCtx->Commands[offset]->Text, commandsPtr[i]->Text,
+                   textLen);
 
       break;
+    default:
+      // do nothing
+      continue;
     }
 
     commandLoopCtx->WriteIndex =

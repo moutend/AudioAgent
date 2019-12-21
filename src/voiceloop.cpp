@@ -69,7 +69,7 @@ DWORD WINAPI voiceLoop(LPVOID context) {
 
     if (ctx->IsSSML) {
       try {
-        Platform::String ^ ssml = ref new Platform::String(ctx->BufferPtr);
+        Platform::String ^ ssml = ref new Platform::String(ctx->Text);
         speechTask = create_task(synth->SynthesizeSsmlToStreamAsync(ssml));
       } catch (Platform::Exception ^ e) {
         Log->Warn(L"Failed to call SynthesizeSsmlToStreamAsync",
@@ -87,7 +87,7 @@ DWORD WINAPI voiceLoop(LPVOID context) {
       }
     } else {
       try {
-        Platform::String ^ text = ref new Platform::String(ctx->BufferPtr);
+        Platform::String ^ text = ref new Platform::String(ctx->Text);
         speechTask = create_task(synth->SynthesizeTextToStreamAsync(text));
       } catch (Platform::Exception ^ e) {
         Log->Warn(L"Failed to call SynthesizeTextToStreamAsync",
