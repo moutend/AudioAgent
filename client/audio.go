@@ -30,7 +30,7 @@ type postCommandRequest struct {
 }
 
 const (
-	enumPlay = 1
+	enumSFX  = 1
 	enumWait = 2
 	enumText = 3
 	enumSSML = 4
@@ -65,7 +65,7 @@ func postAudioCommand(w http.ResponseWriter, r *http.Request) error {
 			Type: v.Type,
 		}
 		switch v.Type {
-		case enumPlay:
+		case enumSFX:
 			c.SFXIndex = int16(v.Value.(float64))
 		case enumWait:
 			c.WaitDuration = uintptr(math.Float64bits(v.Value.(float64)))
