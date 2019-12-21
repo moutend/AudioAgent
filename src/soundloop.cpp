@@ -24,15 +24,20 @@ DWORD WINAPI soundLoop(LPVOID context) {
     HANDLE waitArray[2] = {ctx->FeedEvent, ctx->QuitEvent};
     DWORD waitResult = WaitForMultipleObjects(2, waitArray, FALSE, INFINITE);
 
-    switch (waitResult) {
-    case WAIT_OBJECT_0 + 0: // ctx->FeedEvent
-      if (!ctx->SoundEngine->Feed(ctx->SoundIndex)) {
-        Log->Warn(L"Failed to feed", GetCurrentThreadId(), __LINE__, __WFILE__);
-      }
+    // ctx->QuitEvent
+    if (waitResult == WAIT_OBJECT_0 + 0) {
       break;
-    case WAIT_OBJECT_0 + 1: // ctx->QuitEvent
-      isActive = false;
-      break;
+    }
+
+    bool ok{};
+
+    if (ctx->SoundIndex < 0) {
+      ok = ctx->SoundEngine->Sleep(ctx->SilenceDuration);
+    } else {
+      ok = ctx->SoundEngine->Feed(ctx->SoundIndex);
+    }
+    if (!ok) {
+      Log->Warn(L"Failed to feed", GetCurrentThreadId(), __LINE__, __WFILE__);
     }
   }
 

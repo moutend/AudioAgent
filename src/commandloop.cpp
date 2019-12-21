@@ -53,17 +53,24 @@ DWORD WINAPI commandLoop(LPVOID context) {
       Log->Info(L"Play sound", GetCurrentThreadId(), __LINE__, __WFILE__);
 
       ctx->SoundLoopCtx->SoundIndex = cmd->SoundIndex;
+      ctx->SoundLoopCtx->SilenceDuration = 0.0;
 
       if (!SetEvent(ctx->SoundLoopCtx->FeedEvent)) {
-        Log->Fail(L"Failed to set feed event", GetCurrentThreadId(), __LINE__,
+        Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
                   __WFILE__);
       }
 
       break;
     case 2:
-      Log->Info(L"Play silent", GetCurrentThreadId(), __LINE__, __WFILE__);
+      Log->Info(L"Play silence", GetCurrentThreadId(), __LINE__, __WFILE__);
 
-      // TODO: implement me!
+      ctx->SoundLoopCtx->SoundIndex = -1;
+      ctx->SoundLoopCtx->SilenceDuration = cmd->waitDuration;
+
+      if (!SetEvent(ctx->SoundLoopCtx->FeedEvent)) {
+        Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
+                  __WFILE__);
+      }
 
       break;
     case 3:
@@ -75,7 +82,7 @@ DWORD WINAPI commandLoop(LPVOID context) {
       ctx->VoiceLoopCtx->BufferLen = cmd->SSMLLen;
 
       if (!SetEvent(ctx->VoiceLoopCtx->FeedEvent)) {
-        Log->Fail(L"Failed to set feed event", GetCurrentThreadId(), __LINE__,
+        Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
                   __WFILE__);
       }
 
@@ -89,7 +96,7 @@ DWORD WINAPI commandLoop(LPVOID context) {
       ctx->VoiceLoopCtx->BufferLen = cmd->SSMLLen;
 
       if (!SetEvent(ctx->VoiceLoopCtx->FeedEvent)) {
-        Log->Fail(L"Failed to set event", GetCurrentThreadId(), __LINE__,
+        Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
                   __WFILE__);
       }
 

@@ -42,6 +42,7 @@ struct SoundLoopContext {
   HANDLE NextEvent = nullptr;
   HANDLE QuitEvent = nullptr;
   int16_t SoundIndex = 0;
+  double SilenceDuration = 0.0;
   PCMAudio::LauncherEngine *SoundEngine = nullptr;
 };
 
