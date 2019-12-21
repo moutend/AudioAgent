@@ -65,7 +65,7 @@ DWORD WINAPI commandLoop(LPVOID context) {
       Log->Info(L"Play silence", GetCurrentThreadId(), __LINE__, __WFILE__);
 
       ctx->SoundLoopCtx->SoundIndex = -1;
-      ctx->SoundLoopCtx->SilenceDuration = cmd->waitDuration;
+      ctx->SoundLoopCtx->SilenceDuration = cmd->WaitDuration;
 
       if (!SetEvent(ctx->SoundLoopCtx->FeedEvent)) {
         Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
