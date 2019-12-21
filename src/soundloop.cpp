@@ -21,7 +21,7 @@ DWORD WINAPI soundLoop(LPVOID context) {
   bool isActive{true};
 
   while (isActive) {
-    HANDLE waitArray[2] = {ctx->FeedEvent, ctx->QuitEvent};
+    HANDLE waitArray[2] = {ctx->QuitEvent, ctx->FeedEvent};
     DWORD waitResult = WaitForMultipleObjects(2, waitArray, FALSE, INFINITE);
 
     // ctx->QuitEvent
