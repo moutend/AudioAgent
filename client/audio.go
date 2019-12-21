@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"path/filepath"
 	"syscall"
@@ -13,12 +14,9 @@ import (
 
 type rawCommand struct {
 	Type         int16
-	SoundIndex   int16
-	WaitDuration float64
-	TextLen      int32
-	TextPtr      uintptr
-	SSMLLen      int32
-	SSMLPtr      uintptr
+	SFXIndex     int16
+	WaitDuration uintptr
+	Text         uintptr
 }
 
 type command struct {
@@ -67,15 +65,12 @@ func postAudioCommand(w http.ResponseWriter, r *http.Request) error {
 			Type: v.Type,
 		}
 		switch v.Type {
-		case enumText:
+		case enumPlay:
+			c.SFXIndex = int16(v.Value.(float64))
+		case enumWait:
+			c.WaitDuration = uintptr(math.Float64bits(v.Value.(float64)))
+		case enumText, enumSSML:
 			text := v.Value.(string)
-			textU16, err := syscall.UTF16FromString(text)
-
-			if err != nil {
-				logger.Println(err)
-				return fmt.Errorf("Internal error")
-			}
-
 			textU16Ptr, err := syscall.UTF16PtrFromString(text)
 
 			if err != nil {
@@ -83,31 +78,9 @@ func postAudioCommand(w http.ResponseWriter, r *http.Request) error {
 				return fmt.Errorf("Internal error")
 			}
 
-			c.TextPtr = uintptr(unsafe.Pointer(textU16Ptr))
-			c.TextLen = int32(len(textU16))
-		case enumSSML:
-			ssml := v.Value.(string)
-			ssmlU16, err := syscall.UTF16FromString(ssml)
-
-			if err != nil {
-				logger.Println(err)
-				return fmt.Errorf("Internal error")
-			}
-
-			ssmlU16Ptr, err := syscall.UTF16PtrFromString(ssml)
-
-			if err != nil {
-				logger.Fatal(err)
-				return fmt.Errorf("Internal error")
-			}
-
-			c.SSMLPtr = uintptr(unsafe.Pointer(ssmlU16Ptr))
-			c.SSMLLen = int32(len(ssmlU16))
-		case enumWait:
-			c.WaitDuration = v.Value.(float64)
-		case enumPlay:
-			c.SoundIndex = int16(v.Value.(float64))
+			c.Text = uintptr(unsafe.Pointer(textU16Ptr))
 		default:
+			continue
 		}
 
 		rawCommands[i] = uintptr(unsafe.Pointer(&c))
