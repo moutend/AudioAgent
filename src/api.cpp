@@ -529,6 +529,7 @@ void __stdcall Push(int32_t *code, Command **commandsPtr,
 
   bool isIdle = commandLoopCtx->IsIdle;
   int32_t base = commandLoopCtx->WriteIndex;
+  size_t textLen{};
 
   for (int32_t i = 0; i < commandsLength; i++) {
     int32_t offset = (base + i) % commandLoopCtx->MaxCommands;
@@ -548,7 +549,7 @@ void __stdcall Push(int32_t *code, Command **commandsPtr,
       delete[] commandLoopCtx->Commands[offset]->Text;
       commandLoopCtx->Commands[offset]->Text = nullptr;
 
-      size_t textLen = std::wcslen(commandsPtr[i]->Text) + 1;
+      textLen = std::wcslen(commandsPtr[i]->Text) + 1;
       commandLoopCtx->Commands[offset]->Text = new wchar_t[textLen];
       std::wmemcpy(commandLoopCtx->Commands[offset]->Text, commandsPtr[i]->Text,
                    textLen);
