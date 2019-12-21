@@ -73,6 +73,16 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
   logLoopCtx->FullLogPath = new wchar_t[fullLogPathLen];
   std::wmemcpy(logLoopCtx->FullLogPath, fullLogPath, fullLogPathLen);
 
+  logLoopCtx->QuitEvent =
+      CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
+
+  if (logLoopCtx->QuitEvent == nullptr) {
+    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LINE__,
+              __WFILE__);
+    *code = -1;
+    return;
+  }
+
   Log->Info(L"Create log loop thread", GetCurrentThreadId(), __LINE__,
             __WFILE__);
 

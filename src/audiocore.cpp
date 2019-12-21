@@ -178,6 +178,9 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
     goto CLEANUP;
   }
 
+  Log->Info(L"Create audio render thread", GetCurrentThreadId(), __LINE__,
+            __WFILE__);
+
   mRenderThread = CreateThread(nullptr, 0, RenderThread, this, 0, nullptr);
 
   if (mRenderThread == nullptr) {
@@ -185,9 +188,6 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
               __WFILE__);
     goto CLEANUP;
   }
-
-  Log->Info(L"Create audio render thread", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
 
   hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr, CLSCTX_ALL,
                         IID_PPV_ARGS(&mDeviceEnumerator));

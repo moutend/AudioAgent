@@ -6,6 +6,7 @@
 #include "types.h"
 
 struct LogLoopContext {
+  HANDLE QuitEvent = nullptr;
   HANDLE FlushEvent = nullptr;
   wchar_t *FullLogPath = nullptr;
 };

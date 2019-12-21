@@ -91,8 +91,8 @@ DWORD WINAPI audioLoop(LPVOID context) {
       break;
     }
 
-    SafeClose(&refreshEvent);
-    SafeClose(&failEvent);
+    SafeCloseHandle(&refreshEvent);
+    SafeCloseHandle(&failEvent);
 
     renderer->Shutdown();
   }

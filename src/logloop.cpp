@@ -22,6 +22,14 @@ DWORD WINAPI logLoop(LPVOID context) {
   HANDLE hLogFile{nullptr};
 
   while (isActive) {
+    HANDLE waitArray[1] = {ctx->QuitEvent};
+    DWORD waitResult = WaitForMultipleObjects(1, waitArray, FALSE, INFINITE);
+
+    if (waitResult == WAIT_OBJECT_0 + 0) {
+      isActive = false;
+      continue;
+    }
+
     Sleep(5000);
 
     if (Log->IsEmpty()) {
@@ -60,7 +68,6 @@ DWORD WINAPI logLoop(LPVOID context) {
     }
 
     SafeCloseHandle(&hLogFile);
-
     Log->Clear();
   }
 
