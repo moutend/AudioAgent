@@ -87,7 +87,7 @@ DWORD WINAPI audioLoop(LPVOID context) {
     case WAIT_OBJECT_0 + 2: // failEvent
       Log->Warn(L"Failed to initialize audio renderer", GetCurrentThreadId(),
                 __LINE__, __WFILE__);
-      Sleep(3000);
+      Sleep(1000);
       break;
     }
 
