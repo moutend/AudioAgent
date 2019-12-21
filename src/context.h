@@ -43,7 +43,7 @@ struct SFXLoopContext {
   HANDLE QuitEvent = nullptr;
   int16_t SFXIndex = 0;
   double WaitDuration = 0.0;
-  PCMAudio::LauncherEngine *SoundEngine = nullptr;
+  PCMAudio::LauncherEngine *SFXEngine = nullptr;
 };
 
 struct CommandLoopContext {
