@@ -12,7 +12,7 @@
 #include "commandloop.h"
 #include "context.h"
 #include "logloop.h"
-#include "soundloop.h"
+#include "sfxloop.h"
 #include "util.h"
 #include "voiceinfo.h"
 #include "voiceloop.h"
@@ -27,23 +27,23 @@ LogLoopContext *logLoopCtx{nullptr};
 CommandLoopContext *commandLoopCtx{nullptr};
 VoiceInfoContext *voiceInfoCtx{nullptr};
 VoiceLoopContext *voiceLoopCtx{nullptr};
-SoundLoopContext *soundLoopCtx{nullptr};
+SFXLoopContext *sfxLoopCtx{nullptr};
 AudioLoopContext *voiceRenderCtx{nullptr};
-AudioLoopContext *soundRenderCtx{nullptr};
+AudioLoopContext *sfxRenderCtx{nullptr};
 
 HANDLE logLoopThread{nullptr};
 HANDLE commandLoopThread{nullptr};
 HANDLE voiceInfoThread{nullptr};
 HANDLE voiceLoopThread{nullptr};
-HANDLE soundLoopThread{nullptr};
+HANDLE sfxLoopThread{nullptr};
 HANDLE voiceRenderThread{nullptr};
-HANDLE soundRenderThread{nullptr};
+HANDLE sfxRenderThread{nullptr};
 
 HANDLE nextVoiceEvent{nullptr};
 HANDLE nextSoundEvent{nullptr};
 
 PCMAudio::RingEngine *voiceEngine{nullptr};
-PCMAudio::LauncherEngine *soundEngine{nullptr};
+PCMAudio::LauncherEngine *sfxEngine{nullptr};
 
 void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
                      int32_t logLevel) {
@@ -185,7 +185,7 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
     return;
   }
 
-  soundEngine = new PCMAudio::LauncherEngine(maxWaves);
+  sfxEngine = new PCMAudio::LauncherEngine(maxWaves);
 
   for (int16_t i = 0; i < maxWaves; i++) {
     wchar_t *filename = new wchar_t[256]{};
@@ -196,7 +196,7 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
                 __WFILE__);
       continue;
     }
-    if (!soundEngine->Register(i, filename)) {
+    if (!sfxEngine->Register(i, filename)) {
       Log->Fail(L"Failed to register", GetCurrentThreadId(), __LINE__,
                 __WFILE__);
       continue;
@@ -218,64 +218,64 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
     return;
   }
 
-  soundLoopCtx = new SoundLoopContext();
-  soundLoopCtx->NextEvent = nextSoundEvent;
-  soundLoopCtx->SoundEngine = soundEngine;
+  sfxLoopCtx = new SFXLoopContext();
+  sfxLoopCtx->NextEvent = nextSoundEvent;
+  sfxLoopCtx->SFXEngine = sfxEngine;
 
-  soundLoopCtx->FeedEvent =
+  sfxLoopCtx->FeedEvent =
       CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
 
-  if (soundLoopCtx->FeedEvent == nullptr) {
+  if (sfxLoopCtx->FeedEvent == nullptr) {
     Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LINE__,
               __WFILE__);
     *code = -1;
     return;
   }
 
-  soundLoopCtx->QuitEvent =
+  sfxLoopCtx->QuitEvent =
       CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
 
-  if (soundLoopCtx->QuitEvent == nullptr) {
+  if (sfxLoopCtx->QuitEvent == nullptr) {
     Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LINE__,
               __WFILE__);
     *code = -1;
     return;
   }
 
-  Log->Info(L"Create sound loop thread", GetCurrentThreadId(), __LINE__,
+  Log->Info(L"Create sfx loop thread", GetCurrentThreadId(), __LINE__,
             __WFILE__);
 
-  soundLoopThread = CreateThread(nullptr, 0, soundLoop,
-                                 static_cast<void *>(soundLoopCtx), 0, nullptr);
+  sfxLoopThread = CreateThread(nullptr, 0, sfxLoop,
+                               static_cast<void *>(sfxLoopCtx), 0, nullptr);
 
-  if (soundLoopThread == nullptr) {
+  if (sfxLoopThread == nullptr) {
     Log->Fail(L"Failed to create thread", GetCurrentThreadId(), __LINE__,
               __WFILE__);
     *code = -1;
     return;
   }
 
-  soundRenderCtx = new AudioLoopContext();
-  soundRenderCtx->NextEvent = nextSoundEvent;
-  soundRenderCtx->Engine = soundEngine;
+  sfxRenderCtx = new AudioLoopContext();
+  sfxRenderCtx->NextEvent = nextSoundEvent;
+  sfxRenderCtx->Engine = sfxEngine;
 
-  soundRenderCtx->QuitEvent =
+  sfxRenderCtx->QuitEvent =
       CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
 
-  if (soundRenderCtx->QuitEvent == nullptr) {
+  if (sfxRenderCtx->QuitEvent == nullptr) {
     Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LINE__,
               __WFILE__);
     *code = -1;
     return;
   }
 
-  Log->Info(L"Create sound render thread", GetCurrentThreadId(), __LINE__,
+  Log->Info(L"Create SFX render thread", GetCurrentThreadId(), __LINE__,
             __WFILE__);
 
-  soundRenderThread = CreateThread(
-      nullptr, 0, audioLoop, static_cast<void *>(soundRenderCtx), 0, nullptr);
+  sfxRenderThread = CreateThread(nullptr, 0, audioLoop,
+                                 static_cast<void *>(sfxRenderCtx), 0, nullptr);
 
-  if (soundRenderThread == nullptr) {
+  if (sfxRenderThread == nullptr) {
     Log->Fail(L"Failed to create thread", GetCurrentThreadId(), __LINE__,
               __WFILE__);
     *code = -1;
@@ -305,7 +305,7 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
   }
 
   commandLoopCtx->VoiceLoopCtx = voiceLoopCtx;
-  commandLoopCtx->SoundLoopCtx = soundLoopCtx;
+  commandLoopCtx->SFXLoopCtx = sfxLoopCtx;
   commandLoopCtx->Commands =
       new Command *[commandLoopCtx->MaxCommands] { nullptr };
 
@@ -392,39 +392,39 @@ void __stdcall Teardown(int32_t *code) {
   Log->Info(L"Delete voice render thread", GetCurrentThreadId(), __LINE__,
             __WFILE__);
 
-  if (!SetEvent(soundLoopCtx->QuitEvent)) {
+  if (!SetEvent(sfxLoopCtx->QuitEvent)) {
     Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
               __WFILE__);
     *code = -1;
     return;
   }
 
-  WaitForSingleObject(soundLoopThread, INFINITE);
-  CloseHandle(soundLoopThread);
-  soundLoopThread = nullptr;
+  WaitForSingleObject(sfxLoopThread, INFINITE);
+  CloseHandle(sfxLoopThread);
+  sfxLoopThread = nullptr;
 
-  Log->Info(L"Delete sound loop thread", GetCurrentThreadId(), __LINE__,
+  Log->Info(L"Delete SFX loop thread", GetCurrentThreadId(), __LINE__,
             __WFILE__);
 
-  if (!SetEvent(soundRenderCtx->QuitEvent)) {
+  if (!SetEvent(sfxRenderCtx->QuitEvent)) {
     Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
               __WFILE__);
     *code = -1;
     return;
   }
 
-  WaitForSingleObject(soundRenderThread, INFINITE);
-  CloseHandle(soundRenderThread);
-  soundRenderThread = nullptr;
+  WaitForSingleObject(sfxRenderThread, INFINITE);
+  CloseHandle(sfxRenderThread);
+  sfxRenderThread = nullptr;
 
-  Log->Info(L"Delete sound render thread", GetCurrentThreadId(), __LINE__,
+  Log->Info(L"Delete SFX render thread", GetCurrentThreadId(), __LINE__,
             __WFILE__);
 
   delete voiceEngine;
   voiceEngine = nullptr;
 
-  delete soundEngine;
-  soundEngine = nullptr;
+  delete sfxEngine;
+  sfxEngine = nullptr;
 
   CloseHandle(nextVoiceEvent);
   nextVoiceEvent = nullptr;
@@ -446,8 +446,8 @@ void __stdcall Teardown(int32_t *code) {
   delete voiceLoopCtx;
   voiceLoopCtx = nullptr;
 
-  delete soundLoopCtx;
-  soundLoopCtx = nullptr;
+  delete sfxLoopCtx;
+  sfxLoopCtx = nullptr;
 
   Log->Info(L"Complete teardown audio node", GetCurrentThreadId(), __LINE__,
             __WFILE__);
@@ -471,7 +471,7 @@ void __stdcall FadeIn(int32_t *code) {
   Log->Info(L"Called FadeIn()", GetCurrentThreadId(), __LINE__, __WFILE__);
 
   voiceEngine->FadeIn();
-  soundEngine->FadeIn();
+  sfxEngine->FadeIn();
 
   *code = 0;
 }
@@ -490,7 +490,7 @@ void __stdcall FadeOut(int32_t *code) {
   Log->Info(L"Called FadeOut()", GetCurrentThreadId(), __LINE__, __WFILE__);
 
   voiceEngine->FadeOut();
-  soundEngine->FadeOut();
+  sfxEngine->FadeOut();
 
   *code = 0;
 }

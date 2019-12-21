@@ -1,16 +1,16 @@
 #include <cpplogger.h>
 
 #include "context.h"
-#include "soundloop.h"
+#include "sfxloop.h"
 #include "util.h"
 
 extern Logger::Logger *Log;
 
-DWORD WINAPI soundLoop(LPVOID context) {
-  Log->Info(L"Start sound loop thread", GetCurrentThreadId(), __LINE__,
+DWORD WINAPI sfxLoop(LPVOID context) {
+  Log->Info(L"Start SFX loop thread", GetCurrentThreadId(), __LINE__,
             __WFILE__);
 
-  SoundLoopContext *ctx = static_cast<SoundLoopContext *>(context);
+  SFXLoopContext *ctx = static_cast<SFXLoopContext *>(context);
 
   if (ctx == nullptr) {
     Log->Fail(L"Failed to obtain ctx", GetCurrentThreadId(), __LINE__,
@@ -41,8 +41,7 @@ DWORD WINAPI soundLoop(LPVOID context) {
     }
   }
 
-  Log->Info(L"End sound loop thread", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"End SFX loop thread", GetCurrentThreadId(), __LINE__, __WFILE__);
 
   return S_OK;
 }

@@ -37,7 +37,7 @@ struct VoiceLoopContext {
   VoiceInfoContext *VoiceInfoCtx = nullptr;
 };
 
-struct SoundLoopContext {
+struct SFXLoopContext {
   HANDLE FeedEvent = nullptr;
   HANDLE NextEvent = nullptr;
   HANDLE QuitEvent = nullptr;
@@ -50,7 +50,7 @@ struct CommandLoopContext {
   HANDLE PushEvent = nullptr;
   HANDLE QuitEvent = nullptr;
   VoiceLoopContext *VoiceLoopCtx = nullptr;
-  SoundLoopContext *SoundLoopCtx = nullptr;
+  SFXLoopContext *SFXLoopCtx = nullptr;
   Command **Commands = nullptr;
   bool IsIdle = true;
   int32_t ReadIndex = 0;

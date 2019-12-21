@@ -27,7 +27,7 @@ DWORD WINAPI commandLoop(LPVOID context) {
   while (isActive) {
     HANDLE waitArray[4] = {ctx->QuitEvent, ctx->PushEvent,
                            ctx->VoiceLoopCtx->NextEvent,
-                           ctx->SoundLoopCtx->NextEvent};
+                           ctx->SFXLoopCtx->NextEvent};
     DWORD waitResult = WaitForMultipleObjects(4, waitArray, FALSE, INFINITE);
 
     if (waitResult == WAIT_OBJECT_0 + 0) {
@@ -41,7 +41,7 @@ DWORD WINAPI commandLoop(LPVOID context) {
     switch (waitResult) {
     case WAIT_OBJECT_0 + 1: // ctx->PushEvent
       ctx->VoiceLoopCtx->VoiceEngine->FadeOut();
-      ctx->SoundLoopCtx->SoundEngine->FadeOut();
+      ctx->SFXLoopCtx->SFXEngine->FadeOut();
       break;
     }
 
@@ -52,9 +52,9 @@ DWORD WINAPI commandLoop(LPVOID context) {
     case 1:
       Log->Info(L"Play SFX", GetCurrentThreadId(), __LINE__, __WFILE__);
 
-      ctx->SoundLoopCtx->SFXIndex = cmd->SFXIndex;
+      ctx->SFXLoopCtx->SFXIndex = cmd->SFXIndex;
 
-      if (!SetEvent(ctx->SoundLoopCtx->FeedEvent)) {
+      if (!SetEvent(ctx->SFXLoopCtx->FeedEvent)) {
         Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
                   __WFILE__);
       }
@@ -63,10 +63,10 @@ DWORD WINAPI commandLoop(LPVOID context) {
     case 2:
       Log->Info(L"Wait", GetCurrentThreadId(), __LINE__, __WFILE__);
 
-      ctx->SoundLoopCtx->SFXIndex = -1;
-      ctx->SoundLoopCtx->WaitDuration = cmd->WaitDuration;
+      ctx->SFXLoopCtx->SFXIndex = -1;
+      ctx->SFXLoopCtx->WaitDuration = cmd->WaitDuration;
 
-      if (!SetEvent(ctx->SoundLoopCtx->FeedEvent)) {
+      if (!SetEvent(ctx->SFXLoopCtx->FeedEvent)) {
         Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
                   __WFILE__);
       }
