@@ -32,9 +32,9 @@ DWORD WINAPI sfxLoop(LPVOID context) {
     bool ok{};
 
     if (ctx->SFXIndex < 0) {
-      ok = ctx->SoundEngine->Sleep(ctx->WaitDuration);
+      ok = ctx->SFXEngine->Sleep(ctx->WaitDuration);
     } else {
-      ok = ctx->SoundEngine->Feed(ctx->SFXIndex);
+      ok = ctx->SFXEngine->Feed(ctx->SFXIndex);
     }
     if (!ok) {
       Log->Warn(L"Failed to feed", GetCurrentThreadId(), __LINE__, __WFILE__);
