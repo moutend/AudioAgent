@@ -27,8 +27,8 @@ set(
   src/voiceloop.h
   src/voiceinfo.cpp
   src/voiceinfo.h
-  src/soundloop.cpp
-  src/soundloop.h
+  src/sfxloop.cpp
+  src/sfxloop.h
   src/audioloop.cpp
   src/audioloop.h
   src/notification.cpp
