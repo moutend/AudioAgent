@@ -63,7 +63,7 @@ DWORD WINAPI commandLoop(LPVOID context) {
     case 2:
       Log->Info(L"Wait", GetCurrentThreadId(), __LINE__, __WFILE__);
 
-      ctx->SoundLoopCtx->SoundIndex = -1;
+      ctx->SoundLoopCtx->SFXIndex = -1;
       ctx->SoundLoopCtx->WaitDuration = cmd->WaitDuration;
 
       if (!SetEvent(ctx->SoundLoopCtx->FeedEvent)) {

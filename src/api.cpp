@@ -312,10 +312,9 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
   for (int32_t i = 0; i < commandLoopCtx->MaxCommands; i++) {
     commandLoopCtx->Commands[i] = new Command;
     commandLoopCtx->Commands[i]->Type = 0;
-    commandLoopCtx->Commands[i]->SoundIndex = 0;
+    commandLoopCtx->Commands[i]->SFXIndex = 0;
     commandLoopCtx->Commands[i]->WaitDuration = 0.0;
-    commandLoopCtx->Commands[i]->SSMLPtr = nullptr;
-    commandLoopCtx->Commands[i]->SSMLLen = 0;
+    commandLoopCtx->Commands[i]->Text = nullptr;
   }
 
   Log->Info(L"Create command loop thread", GetCurrentThreadId(), __LINE__,
@@ -434,8 +433,8 @@ void __stdcall Teardown(int32_t *code) {
   nextSoundEvent = nullptr;
 
   for (int32_t i = 0; i < commandLoopCtx->MaxCommands; i++) {
-    delete[] commandLoopCtx->Commands[i]->SSMLPtr;
-    commandLoopCtx->Commands[i]->SSMLPtr = nullptr;
+    delete[] commandLoopCtx->Commands[i]->Text;
+    commandLoopCtx->Commands[i]->Text = nullptr;
 
     delete commandLoopCtx->Commands[i];
     commandLoopCtx->Commands[i] = nullptr;

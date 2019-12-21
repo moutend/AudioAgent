@@ -31,10 +31,10 @@ DWORD WINAPI soundLoop(LPVOID context) {
 
     bool ok{};
 
-    if (ctx->SoundIndex < 0) {
-      ok = ctx->SoundEngine->Sleep(ctx->SilenceDuration);
+    if (ctx->SFXIndex < 0) {
+      ok = ctx->SoundEngine->Sleep(ctx->WaitDuration);
     } else {
-      ok = ctx->SoundEngine->Feed(ctx->SoundIndex);
+      ok = ctx->SoundEngine->Feed(ctx->SFXIndex);
     }
     if (!ok) {
       Log->Warn(L"Failed to feed", GetCurrentThreadId(), __LINE__, __WFILE__);
