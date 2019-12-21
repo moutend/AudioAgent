@@ -31,8 +31,8 @@ DWORD WINAPI audioLoop(LPVOID context) {
         CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
 
     if (refreshEvent == nullptr) {
-      Log->Fail(L"Failed to create refreshEvent", GetCurrentThreadId(),
-                __LINE__, __WFILE__);
+      Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LINE__,
+                __WFILE__);
       return E_FAIL;
     }
 
@@ -40,7 +40,7 @@ DWORD WINAPI audioLoop(LPVOID context) {
         CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
 
     if (failEvent == nullptr) {
-      Log->Fail(L"Failed to create failEvent", GetCurrentThreadId(), __LINE__,
+      Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LINE__,
                 __WFILE__);
       return E_FAIL;
     }
@@ -73,29 +73,26 @@ DWORD WINAPI audioLoop(LPVOID context) {
 
     SafeRelease(&op);
 
-    HANDLE waitArray[3] = {refreshEvent, failEvent, ctx->QuitEvent};
+    HANDLE waitArray[3] = {ctx->QuitEvent, refreshEvent, failEvent};
     DWORD waitResult = WaitForMultipleObjects(3, waitArray, FALSE, INFINITE);
 
     switch (waitResult) {
-    case WAIT_OBJECT_0 + 0: // refreshEvent
+    case WAIT_OBJECT_0 + 0: // ctx->QuitEvent
+      isActive = false;
+      break;
+    case WAIT_OBJECT_0 + 1: // refreshEvent
       Log->Info(L"Refresh audio renderer", GetCurrentThreadId(), __LINE__,
                 __WFILE__);
       break;
-    case WAIT_OBJECT_0 + 1: // failEvent
-      Log->Warn(L"Try initializing audio renderer", GetCurrentThreadId(),
+    case WAIT_OBJECT_0 + 2: // failEvent
+      Log->Warn(L"Failed to initialize audio renderer", GetCurrentThreadId(),
                 __LINE__, __WFILE__);
-      Sleep(1000);
-      break;
-    case WAIT_OBJECT_0 + 2: // ctx->QuitEvent
-      isActive = false;
+      Sleep(3000);
       break;
     }
 
-    CloseHandle(refreshEvent);
-    refreshEvent = nullptr;
-
-    CloseHandle(failEvent);
-    failEvent = nullptr;
+    SafeClose(&refreshEvent);
+    SafeClose(&failEvent);
 
     renderer->Shutdown();
   }

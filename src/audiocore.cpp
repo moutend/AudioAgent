@@ -39,36 +39,36 @@ void AudioCore::LogMixFormat() {
 }
 
 void AudioCore::Shutdown() {
-  if (mShutdownEvent != nullptr) {
+  if (!mActive) {
+    return;
+  }
 
-    Log->Info(L"Send event (mShutdownEvent)", GetCurrentThreadId(), __LINE__,
+  Log->Info(L"Shutdown audio core", GetCurrentThreadId(), __LINE__, __WFILE__);
+
+  if (!SetEvent(mShutdownEvent)) {
+    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
               __WFILE__);
-
-    if (!SetEvent(mShutdownEvent)) {
-      Log->Fail(L"Failed to set mShutdownEvent", GetCurrentThreadId(), __LINE__,
-                __WFILE__);
-      return;
-    }
-
-    mShutdownEvent = nullptr;
-  }
-  if (mRenderThread != nullptr) {
-    WaitForSingleObject(mRenderThread, INFINITE);
-    CloseHandle(mRenderThread);
-    mRenderThread = nullptr;
-  }
-  if (mMixFormat != nullptr) {
-    CoTaskMemFree(mMixFormat);
-    mMixFormat = nullptr;
+    return;
   }
 
-  SafeCloseHandle(&mRenderEvent);
+  WaitForSingleObject(mRenderThread, INFINITE);
+  SafeCloseHandle(&mRenderThread);
+
+  Log->Info(L"Delete audio render thread", GetCurrentThreadId(), __LINE__,
+            __WFILE__);
+
+  CoTaskMemFree(mMixFormat);
+  mMixFormat = nullptr;
+
   SafeCloseHandle(&mShutdownEvent);
+  SafeCloseHandle(&mRenderEvent);
   SafeCloseHandle(&mSwitchStreamEvent);
   SafeRelease(&mDevice);
   SafeRelease(&mDeviceEnumerator);
   SafeRelease(&mAudioRenderClient);
   SafeRelease(&mAudioClient);
+
+  mActive = false;
 }
 
 HRESULT
@@ -83,7 +83,7 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
     Log->Fail(L"Failed to call "
               "IActivateAudioInterfaceAsyncOperation::GetActivateResult",
               GetCurrentThreadId(), __LINE__, __WFILE__);
-    goto CLEAN;
+    goto CLEANUP;
   }
 
   unknown->QueryInterface(IID_PPV_ARGS(&mAudioClient));
@@ -92,7 +92,7 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
     Log->Fail(L"Failed to get mAudioClient", GetCurrentThreadId(), __LINE__,
               __WFILE__);
     hr = E_FAIL;
-    goto CLEAN;
+    goto CLEANUP;
   }
 
   hr = mAudioClient->GetMixFormat(&mMixFormat);
@@ -100,7 +100,7 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
   if (FAILED(hr)) {
     Log->Fail(L"Failed to call IAudioClient::GetMixFormat",
               GetCurrentThreadId(), __LINE__, __WFILE__);
-    goto CLEAN;
+    goto CLEANUP;
   }
   if (reinterpret_cast<WAVEFORMATEXTENSIBLE *>(mMixFormat)->SubFormat !=
       KSDATAFORMAT_SUBTYPE_PCM) {
@@ -120,7 +120,7 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
   if (FAILED(hr)) {
     Log->Fail(L"Failed to initialize mAudioClient", GetCurrentThreadId(),
               __LINE__, __WFILE__);
-    goto CLEAN;
+    goto CLEANUP;
   }
 
   hr = mAudioClient->GetBufferSize(&mBufferFrames);
@@ -128,7 +128,7 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
   if (FAILED(hr)) {
     Log->Fail(L"Failed to call IAudioClient::GetBufferSize",
               GetCurrentThreadId(), __LINE__, __WFILE__);
-    goto CLEAN;
+    goto CLEANUP;
   }
 
   hr = mAudioClient->GetService(__uuidof(IAudioRenderClient),
@@ -137,37 +137,37 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
   if (FAILED(hr)) {
     Log->Fail(L"Failed to get mAudioRenderClient", GetCurrentThreadId(),
               __LINE__, __WFILE__);
-    goto CLEAN;
+    goto CLEANUP;
   }
 
   mRenderEvent =
       CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
 
   if (mRenderEvent == nullptr) {
-    Log->Fail(L"Failed to create mRenderEvent", GetCurrentThreadId(), __LINE__,
+    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LINE__,
               __WFILE__);
     hr = E_FAIL;
-    goto CLEAN;
+    goto CLEANUP;
   }
 
   mShutdownEvent =
       CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
 
   if (mShutdownEvent == nullptr) {
-    Log->Fail(L"Failed to create mShutdownEvent", GetCurrentThreadId(),
-              __LINE__, __WFILE__);
+    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LINE__,
+              __WFILE__);
     hr = E_FAIL;
-    goto CLEAN;
+    goto CLEANUP;
   }
 
   mSwitchStreamEvent =
       CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
 
   if (mSwitchStreamEvent == nullptr) {
-    Log->Fail(L"Failed to create mSwitchStreamEvent", GetCurrentThreadId(),
-              __LINE__, __WFILE__);
+    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LINE__,
+              __WFILE__);
     hr = E_FAIL;
-    goto CLEAN;
+    goto CLEANUP;
   }
 
   hr = mAudioClient->SetEventHandle(mRenderEvent);
@@ -175,16 +175,19 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
   if (FAILED(hr)) {
     Log->Fail(L"Failed to call IAudioClient::SetEventHandle",
               GetCurrentThreadId(), __LINE__, __WFILE__);
-    goto CLEAN;
+    goto CLEANUP;
   }
 
   mRenderThread = CreateThread(nullptr, 0, RenderThread, this, 0, nullptr);
 
   if (mRenderThread == nullptr) {
-    Log->Fail(L"Failed to create mRenderThread", GetCurrentThreadId(), __LINE__,
+    Log->Fail(L"Failed to create thread", GetCurrentThreadId(), __LINE__,
               __WFILE__);
-    goto CLEAN;
+    goto CLEANUP;
   }
+
+  Log->Info(L"Create audio render thread", GetCurrentThreadId(), __LINE__,
+            __WFILE__);
 
   hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr, CLSCTX_ALL,
                         IID_PPV_ARGS(&mDeviceEnumerator));
@@ -192,7 +195,7 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
   if (FAILED(hr)) {
     Log->Fail(L"Failed to create mDeviceEnumerator", GetCurrentThreadId(),
               __LINE__, __WFILE__);
-    goto CLEAN;
+    goto CLEANUP;
   }
 
   hr = mDeviceEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &mDevice);
@@ -200,7 +203,7 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
   if (FAILED(hr)) {
     Log->Fail(L"Failed to create mDevice", GetCurrentThreadId(), __LINE__,
               __WFILE__);
-    goto CLEAN;
+    goto CLEANUP;
   }
 
   IPropertyStore *ps;
@@ -210,7 +213,7 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
   if (FAILED(hr)) {
     Log->Fail(L"Failed to open property store", GetCurrentThreadId(), __LINE__,
               __WFILE__);
-    goto CLEAN;
+    goto CLEANUP;
   }
 
   PROPVARIANT friendlyName;
@@ -221,7 +224,7 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
   if (FAILED(hr)) {
     Log->Fail(L"Failed to get friendly name", GetCurrentThreadId(), __LINE__,
               __WFILE__);
-    goto CLEAN;
+    goto CLEANUP;
   }
 
   wchar_t *deviceId = new wchar_t[256]{};
@@ -231,7 +234,7 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
   if (FAILED(hr)) {
     Log->Fail(L"Failed to call IMMDevice::GetId", GetCurrentThreadId(),
               __LINE__, __WFILE__);
-    goto CLEAN;
+    goto CLEANUP;
   }
 
   constexpr size_t deviceNameLen{512};
@@ -245,7 +248,7 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
   if (FAILED(hr)) {
     Log->Fail(L"Failed to read friendly name", GetCurrentThreadId(), __LINE__,
               __WFILE__);
-    goto CLEAN;
+    goto CLEANUP;
   }
 
   Log->Info(deviceName, GetCurrentThreadId(), __LINE__, __WFILE__);
@@ -259,7 +262,7 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
     Log->Fail(L"Failed to call "
               L"DeviceEnumerator::RegisterEndpointNotificationCallback",
               GetCurrentThreadId(), __LINE__, __WFILE__);
-    goto CLEAN;
+    goto CLEANUP;
   }
 
   hr = mAudioClient->Start();
@@ -267,29 +270,27 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
   if (FAILED(hr)) {
     Log->Fail(L"Failed to call IAudioClient::Start", GetCurrentThreadId(),
               __LINE__, __WFILE__);
-    goto CLEAN;
+    goto CLEANUP;
   }
 
+  mActive = true;
   Log->Info(L"Complete initialize audio core", GetCurrentThreadId(), __LINE__,
             __WFILE__);
 
-CLEAN:
+CLEANUP:
+
   if (FAILED(hr)) {
-    SafeRelease(&mDeviceEnumerator);
     SafeCloseHandle(&mRenderThread);
     SafeCloseHandle(&mRenderEvent);
     SafeCloseHandle(&mSwitchStreamEvent);
     SafeCloseHandle(&mShutdownEvent);
+    SafeRelease(&mDeviceEnumerator);
     SafeRelease(&mAudioRenderClient);
     SafeRelease(&mAudioClient);
     SafeRelease(&unknown);
 
-    Log->Info(L"Send event (mFailEvent)", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
-
     if (!SetEvent(mFailEvent)) {
-      Log->Fail(L"Failed to set mFailEvent", GetCurrentThreadId(), __LINE__,
-                __WFILE__);
+      Log->Fail(L"Failed to ", GetCurrentThreadId(), __LINE__, __WFILE__);
     }
   }
 
@@ -401,12 +402,8 @@ DWORD AudioCore::DoRenderThread() {
         if (!mEngine->IsCompleted()) {
           continue;
         }
-
-        Log->Info(L"Send event (mNextEvent)", GetCurrentThreadId(), __LINE__,
-                  __WFILE__);
-
         if (!SetEvent(mNextEvent)) {
-          Log->Fail(L"Failed to set next event", GetCurrentThreadId(), __LINE__,
+          Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
                     __WFILE__);
         }
 
@@ -436,12 +433,8 @@ DWORD AudioCore::DoRenderThread() {
               __LINE__, __WFILE__);
     return hr;
   }
-
-  Log->Info(L"Send event (mRefreshEvent)", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
-
   if (!SetEvent(mRefreshEvent)) {
-    Log->Fail(L"Failed to set mRefreshEvent", GetCurrentThreadId(), __LINE__,
+    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
               __WFILE__);
     return E_FAIL;
   }

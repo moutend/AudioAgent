@@ -41,8 +41,8 @@ HRESULT Notification::OnDefaultDeviceChanged(EDataFlow flow, ERole role,
               __LINE__, __WFILE__);
 
     if (!SetEvent(mStreamSwitchEvent)) {
-      Log->Fail(L"Failed to set mStreamSwitchEvent", GetCurrentThreadId(),
-                __LINE__, __WFILE__);
+      Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
+                __WFILE__);
     }
     mStreamSwitchEvent = nullptr;
   }
@@ -54,15 +54,10 @@ HRESULT Notification::OnDeviceStateChanged(LPCWSTR deviceId, DWORD newState) {
   std::lock_guard<std::mutex> lock(notificationMutex);
 
   if (newState == DEVICE_STATE_ACTIVE && mStreamSwitchEvent != nullptr) {
-
-    Log->Info(L"Send event (mStreamSwitchEvent)", GetCurrentThreadId(),
-              __LINE__, __WFILE__);
-
     if (!SetEvent(mStreamSwitchEvent)) {
-      Log->Fail(L"Failed to set mStreamSwitchEvent", GetCurrentThreadId(),
-                __LINE__, __WFILE__);
+      Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
+                __WFILE__);
     }
-    mStreamSwitchEvent = nullptr;
   }
 
   return S_OK;

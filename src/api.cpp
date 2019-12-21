@@ -102,8 +102,7 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
   }
 
   WaitForSingleObject(voiceInfoThread, INFINITE);
-  CloseHandle(voiceInfoThread);
-  voiceInfoThread = nullptr;
+  SafeCloseHandle(&voiceInfoThread);
 
   Log->Info(L"Delete voice info thread", GetCurrentThreadId(), __LINE__,
             __WFILE__);
@@ -358,8 +357,7 @@ void __stdcall Teardown(int32_t *code) {
   }
 
   WaitForSingleObject(commandLoopThread, INFINITE);
-  CloseHandle(commandLoopThread);
-  commandLoopThread = nullptr;
+  SafeCloseHandle(&commandLoopThread);
 
   Log->Info(L"Delete command loop thread", GetCurrentThreadId(), __LINE__,
             __WFILE__);
@@ -372,8 +370,7 @@ void __stdcall Teardown(int32_t *code) {
   }
 
   WaitForSingleObject(voiceLoopThread, INFINITE);
-  CloseHandle(voiceLoopThread);
-  voiceLoopThread = nullptr;
+  SafeCloseHandle(&voiceLoopThread);
 
   Log->Info(L"Delete voice loop thread", GetCurrentThreadId(), __LINE__,
             __WFILE__);
@@ -386,8 +383,7 @@ void __stdcall Teardown(int32_t *code) {
   }
 
   WaitForSingleObject(voiceRenderThread, INFINITE);
-  CloseHandle(voiceRenderThread);
-  voiceRenderThread = nullptr;
+  SafeCloseHandle(&voiceRenderThread);
 
   Log->Info(L"Delete voice render thread", GetCurrentThreadId(), __LINE__,
             __WFILE__);
@@ -400,8 +396,7 @@ void __stdcall Teardown(int32_t *code) {
   }
 
   WaitForSingleObject(sfxLoopThread, INFINITE);
-  CloseHandle(sfxLoopThread);
-  sfxLoopThread = nullptr;
+  SafeCloseHandle(&sfxLoopThread);
 
   Log->Info(L"Delete SFX loop thread", GetCurrentThreadId(), __LINE__,
             __WFILE__);
@@ -414,8 +409,7 @@ void __stdcall Teardown(int32_t *code) {
   }
 
   WaitForSingleObject(sfxRenderThread, INFINITE);
-  CloseHandle(sfxRenderThread);
-  sfxRenderThread = nullptr;
+  SafeCloseHandle(&sfxRenderThread);
 
   Log->Info(L"Delete SFX render thread", GetCurrentThreadId(), __LINE__,
             __WFILE__);
@@ -426,11 +420,8 @@ void __stdcall Teardown(int32_t *code) {
   delete sfxEngine;
   sfxEngine = nullptr;
 
-  CloseHandle(nextVoiceEvent);
-  nextVoiceEvent = nullptr;
-
-  CloseHandle(nextSoundEvent);
-  nextSoundEvent = nullptr;
+  SafeCloseHandle(&nextVoiceEvent);
+  SafeCloseHandle(&nextSoundEvent);
 
   for (int32_t i = 0; i < commandLoopCtx->MaxCommands; i++) {
     delete[] commandLoopCtx->Commands[i]->Text;
@@ -452,7 +443,15 @@ void __stdcall Teardown(int32_t *code) {
   Log->Info(L"Complete teardown audio node", GetCurrentThreadId(), __LINE__,
             __WFILE__);
 
-  Log = nullptr;
+  if (!SetEvent(logLoopCtx->QuitEvent)) {
+    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
+              __WFILE__);
+    *code = -1;
+    return;
+  }
+
+  WaitForSingleObject(logLoopThread, INFINITE);
+  SafeCloseHandle(&logLoopThread);
 
   isActive = false;
 }

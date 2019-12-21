@@ -59,8 +59,7 @@ DWORD WINAPI logLoop(LPVOID context) {
       break;
     }
 
-    CloseHandle(hLogFile);
-    hLogFile = nullptr;
+    SafeCloseHandle(&hLogFile);
 
     Log->Clear();
   }

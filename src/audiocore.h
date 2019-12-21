@@ -28,6 +28,7 @@ public:
   DWORD DoRenderThread();
 
 private:
+  bool mActive = false;
   PCMAudio::Engine *mEngine = nullptr;
 
   ERole mDeviceRole;
@@ -35,6 +36,7 @@ private:
   bool mInStreamSwitch;
 
   HANDLE mRenderThread = nullptr;
+
   HANDLE mRefreshEvent = nullptr;
   HANDLE mFailEvent = nullptr;
   HANDLE mNextEvent = nullptr;
@@ -44,6 +46,7 @@ private:
   HANDLE mSwitchStreamEvent = nullptr;
 
   Notification *mNotification = nullptr;
+
   IMMDeviceEnumerator *mDeviceEnumerator = nullptr;
   IMMDevice *mDevice = nullptr;
   IAudioRenderClient *mAudioRenderClient = nullptr;
