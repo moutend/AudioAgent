@@ -3,6 +3,7 @@
 
 #include "context.h"
 #include "logloop.h"
+#include "util.h"
 
 extern Logger::Logger *Log;
 
