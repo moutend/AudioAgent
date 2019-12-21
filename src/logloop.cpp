@@ -24,7 +24,7 @@ DWORD WINAPI logLoop(LPVOID context) {
 
   while (isActive) {
     HANDLE waitArray[1] = {ctx->QuitEvent};
-    DWORD waitResult = WaitForMultipleObjects(1, waitArray, FALSE, INFINITE);
+    DWORD waitResult = WaitForMultipleObjects(1, waitArray, FALSE, 0);
 
     if (waitResult == WAIT_OBJECT_0 + 0) {
       isActive = false;
