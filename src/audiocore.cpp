@@ -83,6 +83,7 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
     Log->Fail(L"Failed to call "
               "IActivateAudioInterfaceAsyncOperation::GetActivateResult",
               GetCurrentThreadId(), __LINE__, __WFILE__);
+              hr = E_FAIL;
     goto CLEANUP;
   }
 
