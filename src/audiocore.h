@@ -3,7 +3,7 @@
 #include <AudioClient.h>
 #include <AudioPolicy.h>
 #include <MMDeviceAPI.h>
-#include <engine.h>
+#include <cppaudio/engine.h>
 #include <windows.h>
 #include <wrl/implements.h>
 
