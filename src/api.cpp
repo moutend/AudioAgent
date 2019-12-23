@@ -1,5 +1,5 @@
 #include <cppaudio/engine.h>
-#include <cpplogger.h>
+#include <cpplogger/cpplogger.h>
 #include <cstring>
 #include <fstream>
 #include <mutex>
