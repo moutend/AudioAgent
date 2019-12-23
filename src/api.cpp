@@ -198,10 +198,10 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
 
   for (int16_t i = 0; i < maxWaves; i++) {
     wchar_t *filePath = new wchar_t[256]{};
-    HRESULT hr = StringCbPrintfW(filename, 255, L"waves\\%03d.wav", i + 1);
+    HRESULT hr = StringCbPrintfW(filePath, 255, L"waves\\%03d.wav", i + 1);
 
     if (FAILED(hr)) {
-      Log->Fail(L"Failed to build filename", GetCurrentThreadId(), __LINE__,
+      Log->Fail(L"Failed to build file path", GetCurrentThreadId(), __LINE__,
                 __WFILE__);
       continue;
     }
@@ -216,8 +216,8 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
 
     Log->Info(filePath, GetCurrentThreadId(), __LINE__, __WFILE__);
 
-    delete[] filename;
-    filename = nullptr;
+    delete[] filePath;
+    filePath = nullptr;
 
     file.close();
   }
