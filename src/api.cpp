@@ -1,8 +1,8 @@
 #include <cppaudio/engine.h>
 #include <cpplogger.h>
 #include <cstring>
+#include <fstream>
 #include <mutex>
-#include <sstream>
 #include <windows.h>
 
 #include <strsafe.h>
@@ -197,7 +197,7 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
   sfxEngine = new PCMAudio::LauncherEngine(maxWaves);
 
   for (int16_t i = 0; i < maxWaves; i++) {
-    wchar_t *filename = new wchar_t[256]{};
+    wchar_t *filePath = new wchar_t[256]{};
     HRESULT hr = StringCbPrintfW(filename, 255, L"waves\\%03d.wav", i + 1);
 
     if (FAILED(hr)) {
@@ -205,16 +205,21 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
                 __WFILE__);
       continue;
     }
-    if (!sfxEngine->Register(i, filename)) {
+
+    std::ifstream file(filePath, std::ios::binary | std::ios::in);
+
+    if (!sfxEngine->Register(i, file)) {
       Log->Fail(L"Failed to register", GetCurrentThreadId(), __LINE__,
                 __WFILE__);
       continue;
     }
 
-    Log->Info(filename, GetCurrentThreadId(), __LINE__, __WFILE__);
+    Log->Info(filePath, GetCurrentThreadId(), __LINE__, __WFILE__);
 
     delete[] filename;
     filename = nullptr;
+
+    file.close();
   }
 
   nextSoundEvent =
