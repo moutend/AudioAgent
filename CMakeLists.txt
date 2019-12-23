@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.12)
 PROJECT(AudioNode)
 
+set(AUDIONODE_VERSION_MAJOR 0)
+set(AUDIONODE_VERSION_MINOR 1)
+set(AUDIONODE_VERSION_REVISION 0)
+
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR OR EXISTS "${CMAKE_BINARY_DIR}/CMakeLists.txt")
   message(FATAL_ERROR "In-source builds are not allowed.")
 endif()
