@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-PROJECT(AudioNode)
+project(AudioNode CXX)
 
 set(AUDIONODE_VERSION_MAJOR 0)
 set(AUDIONODE_VERSION_MINOR 1)
@@ -16,39 +16,12 @@ endif()
 # windows.winmd search path
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -AI\"C:/Program Files (x86)/Windows Kits/10/UnionMetadata/10.0.17763.0\"" )
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -AI\"C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/Common7/IDE/VC/vcpackages\"" )
-set(CMAKE_CXX_STANDARD 17)
-set(
-  SOURCES
-  src/dllmain.cpp
-  src/context.h
-  src/api.cpp
-  src/api.h
-  src/global.cpp
-  src/global.h
-  src/commandloop.cpp
-  src/commandloop.h
-  src/voiceloop.cpp
-  src/voiceloop.h
-  src/voiceinfo.cpp
-  src/voiceinfo.h
-  src/sfxloop.cpp
-  src/sfxloop.h
-  src/audioloop.cpp
-  src/audioloop.h
-  src/notification.cpp
-  src/notification.h
-  src/audiocore.cpp
-  src/audiocore.h
-  src/logloop.cpp
-  src/logloop.h
-  src/types.h
-  src/util.cpp
-  src/util.h
-)
-
 add_subdirectory(lib/cpplogger)
 add_subdirectory(lib/cppaudio)
 
+set(CMAKE_CXX_STANDARD 17)
 add_compile_options("/ZW")
+
+file(GLOB SOURCES "./src/*")
 add_library(AudioNode SHARED ${SOURCES})
 target_link_libraries(AudioNode cpplogger cppaudio avrt.lib mmdevapi.lib)
