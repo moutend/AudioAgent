@@ -46,17 +46,10 @@ DWORD WINAPI logLoop(LPVOID context) {
 
     json::value message = Log->ToJSON();
 
-    /*
-        try {
-          pplx::create_task([&message] {
-            http_client client(L"http://localhost:7901/v1/log");
-            return client.request(methods::POST, L"", message.serialize(),
-                                  L"application/json");
-          }).then([](http_response response) {});
-        } catch (...) {
-          // todo
-        }
-        */
+    http_client client(L"http://localhost:7901/v1/log");
+    client.request(methods::POST, L"", message.serialize(), L"application/json")
+        .wait();
+
     Log->Clear();
     Log->Unlock();
   }
