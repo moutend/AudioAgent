@@ -1,9 +1,14 @@
 #include <cpplogger/cpplogger.h>
+#include <cpprest/http_client.h>
 #include <sstream>
 
 #include "context.h"
 #include "logloop.h"
 #include "util.h"
+
+using namespace web;
+using namespace web::http;
+using namespace web::http::client;
 
 extern Logger::Logger *Log;
 
@@ -37,39 +42,18 @@ DWORD WINAPI logLoop(LPVOID context) {
       continue;
     }
 
-    hLogFile =
-        CreateFileW(ctx->FullLogPath, FILE_APPEND_DATA, FILE_SHARE_READ,
-                    nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    Log->Lock();
 
-    if (hLogFile == nullptr) {
-      break;
-    }
+    json::value message = Log->ToJSON();
 
-    int dataLen = Log->Size();
-    wchar_t *data = new wchar_t[dataLen];
+    pplx::create_task([&message] {
+      http_client client(L"http://localhost:7901/v1/log");
+      return client.request(methods::POST, L"", message.serialize(),
+                            L"application/json");
+    }).then([](http_response response) {});
 
-    Log->Copy(data, dataLen);
-
-    DWORD bytesWritten{};
-    int bufferLen = WideCharToMultiByte(CP_UTF8, 0, data, dataLen, nullptr, 0,
-                                        nullptr, nullptr);
-
-    if (bufferLen <= 0) {
-      break;
-    }
-
-    char *buffer = new char[bufferLen]{};
-
-    if (WideCharToMultiByte(CP_UTF8, 0, data, dataLen, buffer, bufferLen,
-                            nullptr, nullptr) <= 0) {
-      break;
-    }
-    if (!WriteFile(hLogFile, buffer, bufferLen, &bytesWritten, nullptr)) {
-      break;
-    }
-
-    SafeCloseHandle(&hLogFile);
     Log->Clear();
+    Log->Unlock();
   }
 
   return S_OK;
