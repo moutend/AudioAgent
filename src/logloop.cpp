@@ -44,8 +44,9 @@ DWORD WINAPI logLoop(LPVOID context) {
 
     Log->Lock();
 
-    json::value message = Log->ToJSON();
-
+    // json::value message = Log->ToJSON();
+    json::value message;
+    message[L"foo"] = json::value(1234);
     try {
       pplx::create_task([&message] {
         http_client client(L"http://localhost:7901/v1/log");
