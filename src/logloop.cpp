@@ -42,8 +42,6 @@ DWORD WINAPI logLoop(LPVOID context) {
       continue;
     }
 
-    Log->Lock();
-
     json::value message = Log->ToJSON();
 
     http_client client(L"http://localhost:7901/v1/log");
@@ -51,7 +49,6 @@ DWORD WINAPI logLoop(LPVOID context) {
         .wait();
 
     Log->Clear();
-    Log->Unlock();
   }
 
   return S_OK;
