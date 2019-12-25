@@ -37,11 +37,12 @@ DWORD WINAPI logLoop(LPVOID context) {
     }
 
     Sleep(5000);
-    continue;
+
     if (Log->IsEmpty()) {
       continue;
     }
 
+    continue;
     Log->Lock();
 
     // json::value message = Log->ToJSON();
