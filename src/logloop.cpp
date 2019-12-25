@@ -56,7 +56,7 @@ DWORD WINAPI logLoop(LPVOID context) {
     } catch (...) {
       // todo
     }
-    Log->Clear();
+    // Log->Clear();
     Log->Unlock();
   }
 
