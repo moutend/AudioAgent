@@ -21,14 +21,12 @@ using Windows::Foundation::Metadata::ApiInformation;
 extern Logger::Logger *Log;
 
 DWORD WINAPI voiceLoop(LPVOID context) {
-  Log->Info(L"Start Voice loop thread", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"Start Voice loop thread", GetCurrentThreadId(), __LONGFILE__);
 
   VoiceLoopContext *ctx = static_cast<VoiceLoopContext *>(context);
 
   if (ctx == nullptr) {
-    Log->Fail(L"Failed to obtain ctx", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to obtain ctx", GetCurrentThreadId(), __LONGFILE__);
     return E_FAIL;
   }
 
@@ -73,7 +71,7 @@ DWORD WINAPI voiceLoop(LPVOID context) {
         speechTask = create_task(synth->SynthesizeSsmlToStreamAsync(ssml));
       } catch (Platform::Exception ^ e) {
         Log->Warn(L"Failed to call SynthesizeSsmlToStreamAsync",
-                  GetCurrentThreadId(), __LINE__, __WFILE__);
+                  GetCurrentThreadId(), __LONGFILE__);
         continue;
       }
 
@@ -82,7 +80,7 @@ DWORD WINAPI voiceLoop(LPVOID context) {
       if (speechTask.is_done()) {
         Log->Warn(
             L"Failed to continue speech synthesis (probably SSML is broken)",
-            GetCurrentThreadId(), __LINE__, __WFILE__);
+            GetCurrentThreadId(), __LONGFILE__);
         continue;
       }
     } else {
@@ -91,7 +89,7 @@ DWORD WINAPI voiceLoop(LPVOID context) {
         speechTask = create_task(synth->SynthesizeTextToStreamAsync(text));
       } catch (Platform::Exception ^ e) {
         Log->Warn(L"Failed to call SynthesizeTextToStreamAsync",
-                  GetCurrentThreadId(), __LINE__, __WFILE__);
+                  GetCurrentThreadId(), __LONGFILE__);
         continue;
       }
     }
@@ -120,7 +118,7 @@ DWORD WINAPI voiceLoop(LPVOID context) {
             previous.get();
           } catch (Platform::Exception ^ e) {
             Log->Warn(L"Failed to complete speech synthesis",
-                      GetCurrentThreadId(), __LINE__, __WFILE__);
+                      GetCurrentThreadId(), __LONGFILE__);
           }
         })
         .wait();
@@ -128,8 +126,7 @@ DWORD WINAPI voiceLoop(LPVOID context) {
 
   RoUninitialize();
 
-  Log->Info(L"End Voice loop thread", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"End Voice loop thread", GetCurrentThreadId(), __LONGFILE__);
 
   return S_OK;
 }

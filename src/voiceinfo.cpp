@@ -20,14 +20,12 @@ using Windows::Foundation::Metadata::ApiInformation;
 extern Logger::Logger *Log;
 
 DWORD WINAPI voiceInfo(LPVOID context) {
-  Log->Info(L"Start Voice info thread", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"Start Voice info thread", GetCurrentThreadId(), __LONGFILE__);
 
   VoiceInfoContext *ctx = static_cast<VoiceInfoContext *>(context);
 
   if (ctx == nullptr) {
-    Log->Fail(L"Failed to obtain ctx", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to obtain ctx", GetCurrentThreadId(), __LONGFILE__);
     return E_FAIL;
   }
 
@@ -74,8 +72,7 @@ DWORD WINAPI voiceInfo(LPVOID context) {
 
   RoUninitialize();
 
-  Log->Info(L"End Voice info thread", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"End Voice info thread", GetCurrentThreadId(), __LONGFILE__);
 
   return S_OK;
 }

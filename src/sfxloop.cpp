@@ -7,14 +7,12 @@
 extern Logger::Logger *Log;
 
 DWORD WINAPI sfxLoop(LPVOID context) {
-  Log->Info(L"Start SFX loop thread", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"Start SFX loop thread", GetCurrentThreadId(), __LONGFILE__);
 
   SFXLoopContext *ctx = static_cast<SFXLoopContext *>(context);
 
   if (ctx == nullptr) {
-    Log->Fail(L"Failed to obtain ctx", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to obtain ctx", GetCurrentThreadId(), __LONGFILE__);
     return E_FAIL;
   }
 
@@ -37,11 +35,11 @@ DWORD WINAPI sfxLoop(LPVOID context) {
       ok = ctx->SFXEngine->Feed(ctx->SFXIndex);
     }
     if (!ok) {
-      Log->Warn(L"Failed to feed", GetCurrentThreadId(), __LINE__, __WFILE__);
+      Log->Warn(L"Failed to feed", GetCurrentThreadId(), __LONGFILE__);
     }
   }
 
-  Log->Info(L"End SFX loop thread", GetCurrentThreadId(), __LINE__, __WFILE__);
+  Log->Info(L"End SFX loop thread", GetCurrentThreadId(), __LONGFILE__);
 
   return S_OK;
 }

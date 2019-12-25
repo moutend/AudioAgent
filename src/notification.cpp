@@ -34,15 +34,14 @@ HRESULT Notification::OnDefaultDeviceChanged(EDataFlow flow, ERole role,
   wss << L"New default device: " << newDefaultDeviceId << L" / ";
   // wss << L"Current default device" << mDeviceId;
 
-  Log->Info(wss.str(), GetCurrentThreadId(), __LINE__, __WFILE__);
+  Log->Info(wss.str(), GetCurrentThreadId(), __LONGFILE__);
 
   if (isDeviceChanged && mStreamSwitchEvent != nullptr) {
     Log->Info(L"Send event (mStreamSwitchEvent)", GetCurrentThreadId(),
-              __LINE__, __WFILE__);
+              __LONGFILE__);
 
     if (!SetEvent(mStreamSwitchEvent)) {
-      Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
-                __WFILE__);
+      Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LONGFILE__);
     }
     mStreamSwitchEvent = nullptr;
   }
@@ -55,8 +54,7 @@ HRESULT Notification::OnDeviceStateChanged(LPCWSTR deviceId, DWORD newState) {
 
   if (newState == DEVICE_STATE_ACTIVE && mStreamSwitchEvent != nullptr) {
     if (!SetEvent(mStreamSwitchEvent)) {
-      Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
-                __WFILE__);
+      Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LONGFILE__);
     }
   }
 

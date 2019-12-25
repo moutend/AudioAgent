@@ -35,7 +35,7 @@ void AudioCore::LogMixFormat() {
   wss << L"wValidBitsPerSample: " << mixFormatEx->Samples.wValidBitsPerSample
       << L"}";
 
-  Log->Info(wss.str(), GetCurrentThreadId(), __LINE__, __WFILE__);
+  Log->Info(wss.str(), GetCurrentThreadId(), __LONGFILE__);
 }
 
 void AudioCore::Shutdown() {
@@ -43,19 +43,17 @@ void AudioCore::Shutdown() {
     return;
   }
 
-  Log->Info(L"Shutdown audio core", GetCurrentThreadId(), __LINE__, __WFILE__);
+  Log->Info(L"Shutdown audio core", GetCurrentThreadId(), __LONGFILE__);
 
   if (!SetEvent(mShutdownEvent)) {
-    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LONGFILE__);
     return;
   }
 
   WaitForSingleObject(mRenderThread, INFINITE);
   SafeCloseHandle(&mRenderThread);
 
-  Log->Info(L"Delete audio render thread", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"Delete audio render thread", GetCurrentThreadId(), __LONGFILE__);
 
   CoTaskMemFree(mMixFormat);
   mMixFormat = nullptr;
@@ -82,7 +80,7 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
   if (!SUCCEEDED(hr) || !SUCCEEDED(hrActivateResult)) {
     Log->Fail(L"Failed to call "
               "IActivateAudioInterfaceAsyncOperation::GetActivateResult",
-              GetCurrentThreadId(), __LINE__, __WFILE__);
+              GetCurrentThreadId(), __LONGFILE__);
     hr = E_FAIL;
     goto CLEANUP;
   }
@@ -90,8 +88,8 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
   unknown->QueryInterface(IID_PPV_ARGS(&mAudioClient));
 
   if (mAudioClient == nullptr) {
-    Log->Fail(L"Failed to get mAudioClient", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to get mAudioClient", GetCurrentThreadId(),
+              __LONGFILE__);
     hr = E_FAIL;
     goto CLEANUP;
   }
@@ -100,7 +98,7 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
 
   if (FAILED(hr)) {
     Log->Fail(L"Failed to call IAudioClient::GetMixFormat",
-              GetCurrentThreadId(), __LINE__, __WFILE__);
+              GetCurrentThreadId(), __LONGFILE__);
     goto CLEANUP;
   }
   if (reinterpret_cast<WAVEFORMATEXTENSIBLE *>(mMixFormat)->SubFormat !=
@@ -120,7 +118,7 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
 
   if (FAILED(hr)) {
     Log->Fail(L"Failed to initialize mAudioClient", GetCurrentThreadId(),
-              __LINE__, __WFILE__);
+              __LONGFILE__);
     goto CLEANUP;
   }
 
@@ -128,7 +126,7 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
 
   if (FAILED(hr)) {
     Log->Fail(L"Failed to call IAudioClient::GetBufferSize",
-              GetCurrentThreadId(), __LINE__, __WFILE__);
+              GetCurrentThreadId(), __LONGFILE__);
     goto CLEANUP;
   }
 
@@ -137,7 +135,7 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
 
   if (FAILED(hr)) {
     Log->Fail(L"Failed to get mAudioRenderClient", GetCurrentThreadId(),
-              __LINE__, __WFILE__);
+              __LONGFILE__);
     goto CLEANUP;
   }
 
@@ -145,8 +143,7 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
       CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
 
   if (mRenderEvent == nullptr) {
-    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LONGFILE__);
     hr = E_FAIL;
     goto CLEANUP;
   }
@@ -155,8 +152,7 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
       CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
 
   if (mShutdownEvent == nullptr) {
-    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LONGFILE__);
     hr = E_FAIL;
     goto CLEANUP;
   }
@@ -165,8 +161,7 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
       CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
 
   if (mSwitchStreamEvent == nullptr) {
-    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LONGFILE__);
     hr = E_FAIL;
     goto CLEANUP;
   }
@@ -175,18 +170,16 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
 
   if (FAILED(hr)) {
     Log->Fail(L"Failed to call IAudioClient::SetEventHandle",
-              GetCurrentThreadId(), __LINE__, __WFILE__);
+              GetCurrentThreadId(), __LONGFILE__);
     goto CLEANUP;
   }
 
-  Log->Info(L"Create audio render thread", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"Create audio render thread", GetCurrentThreadId(), __LONGFILE__);
 
   mRenderThread = CreateThread(nullptr, 0, RenderThread, this, 0, nullptr);
 
   if (mRenderThread == nullptr) {
-    Log->Fail(L"Failed to create thread", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to create thread", GetCurrentThreadId(), __LONGFILE__);
     goto CLEANUP;
   }
 
@@ -195,15 +188,14 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
 
   if (FAILED(hr)) {
     Log->Fail(L"Failed to create mDeviceEnumerator", GetCurrentThreadId(),
-              __LINE__, __WFILE__);
+              __LONGFILE__);
     goto CLEANUP;
   }
 
   hr = mDeviceEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &mDevice);
 
   if (FAILED(hr)) {
-    Log->Fail(L"Failed to create mDevice", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to create mDevice", GetCurrentThreadId(), __LONGFILE__);
     goto CLEANUP;
   }
 
@@ -212,8 +204,8 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
   hr = mDevice->OpenPropertyStore(STGM_READ, &ps);
 
   if (FAILED(hr)) {
-    Log->Fail(L"Failed to open property store", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to open property store", GetCurrentThreadId(),
+              __LONGFILE__);
     goto CLEANUP;
   }
 
@@ -223,8 +215,8 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
   hr = ps->GetValue(PKEY_Device_FriendlyName, &friendlyName);
 
   if (FAILED(hr)) {
-    Log->Fail(L"Failed to get friendly name", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to get friendly name", GetCurrentThreadId(),
+              __LONGFILE__);
     goto CLEANUP;
   }
 
@@ -234,7 +226,7 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
 
   if (FAILED(hr)) {
     Log->Fail(L"Failed to call IMMDevice::GetId", GetCurrentThreadId(),
-              __LINE__, __WFILE__);
+              __LONGFILE__);
     goto CLEANUP;
   }
 
@@ -247,12 +239,12 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
       deviceId);
 
   if (FAILED(hr)) {
-    Log->Fail(L"Failed to read friendly name", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to read friendly name", GetCurrentThreadId(),
+              __LONGFILE__);
     goto CLEANUP;
   }
 
-  Log->Info(deviceName, GetCurrentThreadId(), __LINE__, __WFILE__);
+  Log->Info(deviceName, GetCurrentThreadId(), __LONGFILE__);
 
   PropVariantClear(&friendlyName);
 
@@ -262,7 +254,7 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
   if (FAILED(hr)) {
     Log->Fail(L"Failed to call "
               L"DeviceEnumerator::RegisterEndpointNotificationCallback",
-              GetCurrentThreadId(), __LINE__, __WFILE__);
+              GetCurrentThreadId(), __LONGFILE__);
     goto CLEANUP;
   }
 
@@ -270,13 +262,13 @@ AudioCore::ActivateCompleted(IActivateAudioInterfaceAsyncOperation *operation) {
 
   if (FAILED(hr)) {
     Log->Fail(L"Failed to call IAudioClient::Start", GetCurrentThreadId(),
-              __LINE__, __WFILE__);
+              __LONGFILE__);
     goto CLEANUP;
   }
 
   mActive = true;
-  Log->Info(L"Complete initialize audio core", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"Complete initialize audio core", GetCurrentThreadId(),
+            __LONGFILE__);
 
 CLEANUP:
 
@@ -291,7 +283,7 @@ CLEANUP:
     SafeRelease(&unknown);
 
     if (!SetEvent(mFailEvent)) {
-      Log->Fail(L"Failed to ", GetCurrentThreadId(), __LINE__, __WFILE__);
+      Log->Fail(L"Failed to ", GetCurrentThreadId(), __LONGFILE__);
     }
   }
 
@@ -306,14 +298,13 @@ DWORD AudioCore::RenderThread(LPVOID Context) {
 }
 
 DWORD AudioCore::DoRenderThread() {
-  Log->Info(L"Start audio render thread", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"Start audio render thread", GetCurrentThreadId(), __LONGFILE__);
 
   HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 
   if (FAILED(hr)) {
-    Log->Fail(L"Failed to call CoInitializeEx", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to call CoInitializeEx", GetCurrentThreadId(),
+              __LONGFILE__);
     return hr;
   }
 
@@ -325,10 +316,10 @@ DWORD AudioCore::DoRenderThread() {
     mmcssHandle = AvSetMmThreadCharacteristics("Audio", &mmcssTaskIndex);
     if (mmcssHandle == nullptr) {
       Log->Warn(L"Failed to call AvSetMmThreadCharacteristics",
-                GetCurrentThreadId(), __LINE__, __WFILE__);
+                GetCurrentThreadId(), __LONGFILE__);
     } else {
       Log->Info(L"Success applying MMCSS attribute", GetCurrentThreadId(),
-                __LINE__, __WFILE__);
+                __LONGFILE__);
     }
   }
 
@@ -342,8 +333,7 @@ DWORD AudioCore::DoRenderThread() {
 
     switch (waitResult) {
     case WAIT_OBJECT_0 + 0: // mShutdownEvent
-      Log->Info(L"Received shutdown event", GetCurrentThreadId(), __LINE__,
-                __WFILE__);
+      Log->Info(L"Received shutdown event", GetCurrentThreadId(), __LONGFILE__);
       isPlaying = false;
       break;
     case WAIT_OBJECT_0 + 1: // mSwitchStreamEvent
@@ -353,12 +343,11 @@ DWORD AudioCore::DoRenderThread() {
       if (FAILED(hr)) {
         Log->Fail(L"Failed to call "
                   "IMMDeviceEnumerator::UnregisterEndpointNotificationCallback",
-                  GetCurrentThreadId(), __LINE__, __WFILE__);
+                  GetCurrentThreadId(), __LONGFILE__);
         break;
       }
 
-      Log->Info(L"Switch render device", GetCurrentThreadId(), __LINE__,
-                __WFILE__);
+      Log->Info(L"Switch render device", GetCurrentThreadId(), __LONGFILE__);
       isPlaying = false;
       break;
     case WAIT_OBJECT_0 + 2: // mRenderEvent
@@ -370,7 +359,7 @@ DWORD AudioCore::DoRenderThread() {
 
       if (!SUCCEEDED(hr)) {
         Log->Warn(L"Failed to call IAudioClient::GetCurrentPadding",
-                  GetCurrentThreadId(), __LINE__, __WFILE__);
+                  GetCurrentThreadId(), __LONGFILE__);
         isPlaying = false;
         break;
       }
@@ -381,7 +370,7 @@ DWORD AudioCore::DoRenderThread() {
 
       if (!SUCCEEDED(hr)) {
         Log->Warn(L"Failed to call IAudioRenderClient::GetBuffer",
-                  GetCurrentThreadId(), __LINE__, __WFILE__);
+                  GetCurrentThreadId(), __LONGFILE__);
         isPlaying = false;
         break;
       }
@@ -404,8 +393,8 @@ DWORD AudioCore::DoRenderThread() {
           continue;
         }
         if (!SetEvent(mNextEvent)) {
-          Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
-                    __WFILE__);
+          Log->Fail(L"Failed to send event", GetCurrentThreadId(),
+                    __LONGFILE__);
         }
 
         mEngine->Reset();
@@ -415,7 +404,7 @@ DWORD AudioCore::DoRenderThread() {
 
       if (!SUCCEEDED(hr)) {
         Log->Warn(L"Failed to call IAudioRenderClient::releaseBuffer",
-                  GetCurrentThreadId(), __LINE__, __WFILE__);
+                  GetCurrentThreadId(), __LONGFILE__);
         isPlaying = false;
         break;
       }
@@ -431,19 +420,17 @@ DWORD AudioCore::DoRenderThread() {
 
   if (FAILED(hr)) {
     Log->Fail(L"Failed to call IAudioClient::Stop", GetCurrentThreadId(),
-              __LINE__, __WFILE__);
+              __LONGFILE__);
     return hr;
   }
   if (!SetEvent(mRefreshEvent)) {
-    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LONGFILE__);
     return E_FAIL;
   }
 
   CoUninitialize();
 
-  Log->Info(L"End audio render thread", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"End audio render thread", GetCurrentThreadId(), __LONGFILE__);
 
   return S_OK;
 }

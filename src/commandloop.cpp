@@ -10,14 +10,12 @@
 extern Logger::Logger *Log;
 
 DWORD WINAPI commandLoop(LPVOID context) {
-  Log->Info(L"Start command loop thread", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"Start command loop thread", GetCurrentThreadId(), __LONGFILE__);
 
   CommandLoopContext *ctx = static_cast<CommandLoopContext *>(context);
 
   if (ctx == nullptr) {
-    Log->Fail(L"Failed to obtain ctx", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to obtain ctx", GetCurrentThreadId(), __LONGFILE__);
     return E_FAIL;
   }
 
@@ -50,59 +48,54 @@ DWORD WINAPI commandLoop(LPVOID context) {
 
     switch (cmd->Type) {
     case 1:
-      Log->Info(L"Play SFX", GetCurrentThreadId(), __LINE__, __WFILE__);
+      Log->Info(L"Play SFX", GetCurrentThreadId(), __LONGFILE__);
 
       ctx->SFXLoopCtx->SFXIndex = cmd->SFXIndex;
 
       if (!SetEvent(ctx->SFXLoopCtx->FeedEvent)) {
-        Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
-                  __WFILE__);
+        Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LONGFILE__);
       }
 
       break;
     case 2:
-      Log->Info(L"Wait", GetCurrentThreadId(), __LINE__, __WFILE__);
+      Log->Info(L"Wait", GetCurrentThreadId(), __LONGFILE__);
 
       ctx->SFXLoopCtx->SFXIndex = -1;
       ctx->SFXLoopCtx->WaitDuration = cmd->WaitDuration;
 
       if (!SetEvent(ctx->SFXLoopCtx->FeedEvent)) {
-        Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
-                  __WFILE__);
+        Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LONGFILE__);
       }
 
       break;
     case 3:
       Log->Info(L"Play voice generated from plain text", GetCurrentThreadId(),
-                __LINE__, __WFILE__);
+                __LONGFILE__);
 
       ctx->VoiceLoopCtx->IsSSML = false;
       ctx->VoiceLoopCtx->Text = cmd->Text;
 
       if (!SetEvent(ctx->VoiceLoopCtx->FeedEvent)) {
-        Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
-                  __WFILE__);
+        Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LONGFILE__);
       }
 
       break;
     case 4:
       Log->Info(L"Play voice generated from SSML", GetCurrentThreadId(),
-                __LINE__, __WFILE__);
+                __LONGFILE__);
 
       ctx->VoiceLoopCtx->IsSSML = true;
       ctx->VoiceLoopCtx->Text = cmd->Text;
 
       if (!SetEvent(ctx->VoiceLoopCtx->FeedEvent)) {
-        Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
-                  __WFILE__);
+        Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LONGFILE__);
       }
 
       break;
     }
   }
 
-  Log->Info(L"End command loop thread", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"End command loop thread", GetCurrentThreadId(), __LONGFILE__);
 
   return S_OK;
 }

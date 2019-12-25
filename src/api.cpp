@@ -57,15 +57,14 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
     return;
   }
   if (isActive) {
-    Log->Warn(L"Already initialized", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Warn(L"Already initialized", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
     return;
   }
 
   Log = new Logger::Logger();
 
-  Log->Info(L"Setup audio node", GetCurrentThreadId(), __LINE__, __WFILE__);
+  Log->Info(L"Setup audio node", GetCurrentThreadId(), __LONGFILE__);
 
   logLoopCtx = new LogLoopContext();
 
@@ -77,36 +76,32 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
       CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
 
   if (logLoopCtx->QuitEvent == nullptr) {
-    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
     return;
   }
 
-  Log->Info(L"Create log loop thread", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"Create log loop thread", GetCurrentThreadId(), __LONGFILE__);
 
   logLoopThread = CreateThread(nullptr, 0, logLoop,
                                static_cast<void *>(logLoopCtx), 0, nullptr);
 
   if (logLoopThread == nullptr) {
-    Log->Fail(L"Failed to create thread", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to create thread", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
     return;
   }
 
   voiceInfoCtx = new VoiceInfoContext();
 
-  Log->Info(L"Create voice info loop thread", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"Create voice info loop thread", GetCurrentThreadId(),
+            __LONGFILE__);
 
   voiceInfoThread = CreateThread(nullptr, 0, voiceInfo,
                                  static_cast<void *>(voiceInfoCtx), 0, nullptr);
 
   if (voiceInfoThread == nullptr) {
-    Log->Fail(L"Failed to create thread", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to create thread", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
     return;
   }
@@ -114,8 +109,7 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
   WaitForSingleObject(voiceInfoThread, INFINITE);
   SafeCloseHandle(&voiceInfoThread);
 
-  Log->Info(L"Delete voice info thread", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"Delete voice info thread", GetCurrentThreadId(), __LONGFILE__);
 
   voiceEngine = new PCMAudio::RingEngine();
 
@@ -123,8 +117,7 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
       CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
 
   if (nextVoiceEvent == nullptr) {
-    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
     return;
   }
@@ -138,8 +131,7 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
       CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
 
   if (voiceLoopCtx->FeedEvent == nullptr) {
-    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
     return;
   }
@@ -148,21 +140,18 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
       CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
 
   if (voiceLoopCtx->QuitEvent == nullptr) {
-    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
     return;
   }
 
-  Log->Info(L"Create voice loop thread", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"Create voice loop thread", GetCurrentThreadId(), __LONGFILE__);
 
   voiceLoopThread = CreateThread(nullptr, 0, voiceLoop,
                                  static_cast<void *>(voiceLoopCtx), 0, nullptr);
 
   if (voiceLoopThread == nullptr) {
-    Log->Fail(L"Failed to create thread", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to create thread", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
     return;
   }
@@ -175,21 +164,18 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
       CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
 
   if (voiceRenderCtx->QuitEvent == nullptr) {
-    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
     return;
   }
 
-  Log->Info(L"Create voice render thread", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"Create voice render thread", GetCurrentThreadId(), __LONGFILE__);
 
   voiceRenderThread = CreateThread(
       nullptr, 0, audioLoop, static_cast<void *>(voiceRenderCtx), 0, nullptr);
 
   if (voiceRenderThread == nullptr) {
-    Log->Fail(L"Failed to create thread", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to create thread", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
     return;
   }
@@ -201,20 +187,19 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
     HRESULT hr = StringCbPrintfW(filePath, 255, L"waves\\%03d.wav", i + 1);
 
     if (FAILED(hr)) {
-      Log->Fail(L"Failed to build file path", GetCurrentThreadId(), __LINE__,
-                __WFILE__);
+      Log->Fail(L"Failed to build file path", GetCurrentThreadId(),
+                __LONGFILE__);
       continue;
     }
 
     std::ifstream file(filePath, std::ios::binary | std::ios::in);
 
     if (!sfxEngine->Register(i, file)) {
-      Log->Fail(L"Failed to register", GetCurrentThreadId(), __LINE__,
-                __WFILE__);
+      Log->Fail(L"Failed to register", GetCurrentThreadId(), __LONGFILE__);
       continue;
     }
 
-    Log->Info(filePath, GetCurrentThreadId(), __LINE__, __WFILE__);
+    Log->Info(filePath, GetCurrentThreadId(), __LONGFILE__);
 
     delete[] filePath;
     filePath = nullptr;
@@ -226,8 +211,7 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
       CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
 
   if (nextSoundEvent == nullptr) {
-    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
     return;
   }
@@ -240,8 +224,7 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
       CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
 
   if (sfxLoopCtx->FeedEvent == nullptr) {
-    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
     return;
   }
@@ -250,21 +233,18 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
       CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
 
   if (sfxLoopCtx->QuitEvent == nullptr) {
-    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
     return;
   }
 
-  Log->Info(L"Create sfx loop thread", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"Create sfx loop thread", GetCurrentThreadId(), __LONGFILE__);
 
   sfxLoopThread = CreateThread(nullptr, 0, sfxLoop,
                                static_cast<void *>(sfxLoopCtx), 0, nullptr);
 
   if (sfxLoopThread == nullptr) {
-    Log->Fail(L"Failed to create thread", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to create thread", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
     return;
   }
@@ -277,21 +257,18 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
       CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
 
   if (sfxRenderCtx->QuitEvent == nullptr) {
-    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
     return;
   }
 
-  Log->Info(L"Create SFX render thread", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"Create SFX render thread", GetCurrentThreadId(), __LONGFILE__);
 
   sfxRenderThread = CreateThread(nullptr, 0, audioLoop,
                                  static_cast<void *>(sfxRenderCtx), 0, nullptr);
 
   if (sfxRenderThread == nullptr) {
-    Log->Fail(L"Failed to create thread", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to create thread", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
     return;
   }
@@ -302,8 +279,7 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
       CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
 
   if (commandLoopCtx->PushEvent == nullptr) {
-    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
     return;
   }
@@ -312,8 +288,7 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
       CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
 
   if (commandLoopCtx->QuitEvent == nullptr) {
-    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to create event", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
     return;
   }
@@ -331,21 +306,18 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
     commandLoopCtx->Commands[i]->Text = nullptr;
   }
 
-  Log->Info(L"Create command loop thread", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"Create command loop thread", GetCurrentThreadId(), __LONGFILE__);
 
   commandLoopThread = CreateThread(
       nullptr, 0, commandLoop, static_cast<void *>(commandLoopCtx), 0, nullptr);
 
   if (commandLoopThread == nullptr) {
-    Log->Fail(L"Failed to create thread", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to create thread", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
     return;
   }
 
-  Log->Info(L"Complete setup audio node", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"Complete setup audio node", GetCurrentThreadId(), __LONGFILE__);
 
   isActive = true;
   *code = 0;
@@ -362,11 +334,10 @@ void __stdcall Teardown(int32_t *code) {
     return;
   }
 
-  Log->Info(L"Teardown audio node", GetCurrentThreadId(), __LINE__, __WFILE__);
+  Log->Info(L"Teardown audio node", GetCurrentThreadId(), __LONGFILE__);
 
   if (!SetEvent(commandLoopCtx->QuitEvent)) {
-    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
     return;
   }
@@ -374,12 +345,10 @@ void __stdcall Teardown(int32_t *code) {
   WaitForSingleObject(commandLoopThread, INFINITE);
   SafeCloseHandle(&commandLoopThread);
 
-  Log->Info(L"Delete command loop thread", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"Delete command loop thread", GetCurrentThreadId(), __LONGFILE__);
 
   if (!SetEvent(voiceLoopCtx->QuitEvent)) {
-    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
     return;
   }
@@ -387,12 +356,10 @@ void __stdcall Teardown(int32_t *code) {
   WaitForSingleObject(voiceLoopThread, INFINITE);
   SafeCloseHandle(&voiceLoopThread);
 
-  Log->Info(L"Delete voice loop thread", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"Delete voice loop thread", GetCurrentThreadId(), __LONGFILE__);
 
   if (!SetEvent(voiceRenderCtx->QuitEvent)) {
-    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
     return;
   }
@@ -400,12 +367,10 @@ void __stdcall Teardown(int32_t *code) {
   WaitForSingleObject(voiceRenderThread, INFINITE);
   SafeCloseHandle(&voiceRenderThread);
 
-  Log->Info(L"Delete voice render thread", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"Delete voice render thread", GetCurrentThreadId(), __LONGFILE__);
 
   if (!SetEvent(sfxLoopCtx->QuitEvent)) {
-    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
     return;
   }
@@ -413,12 +378,10 @@ void __stdcall Teardown(int32_t *code) {
   WaitForSingleObject(sfxLoopThread, INFINITE);
   SafeCloseHandle(&sfxLoopThread);
 
-  Log->Info(L"Delete SFX loop thread", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"Delete SFX loop thread", GetCurrentThreadId(), __LONGFILE__);
 
   if (!SetEvent(sfxRenderCtx->QuitEvent)) {
-    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
     return;
   }
@@ -426,8 +389,7 @@ void __stdcall Teardown(int32_t *code) {
   WaitForSingleObject(sfxRenderThread, INFINITE);
   SafeCloseHandle(&sfxRenderThread);
 
-  Log->Info(L"Delete SFX render thread", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"Delete SFX render thread", GetCurrentThreadId(), __LONGFILE__);
 
   delete voiceEngine;
   voiceEngine = nullptr;
@@ -455,12 +417,11 @@ void __stdcall Teardown(int32_t *code) {
   delete sfxLoopCtx;
   sfxLoopCtx = nullptr;
 
-  Log->Info(L"Complete teardown audio node", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"Complete teardown audio node", GetCurrentThreadId(),
+            __LONGFILE__);
 
   if (!SetEvent(logLoopCtx->QuitEvent)) {
-    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
     return;
   }
@@ -482,7 +443,7 @@ void __stdcall FadeIn(int32_t *code) {
     return;
   }
 
-  Log->Info(L"Called FadeIn()", GetCurrentThreadId(), __LINE__, __WFILE__);
+  Log->Info(L"Called FadeIn()", GetCurrentThreadId(), __LONGFILE__);
 
   voiceEngine->FadeIn();
   sfxEngine->FadeIn();
@@ -501,7 +462,7 @@ void __stdcall FadeOut(int32_t *code) {
     return;
   }
 
-  Log->Info(L"Called FadeOut()", GetCurrentThreadId(), __LINE__, __WFILE__);
+  Log->Info(L"Called FadeOut()", GetCurrentThreadId(), __LONGFILE__);
 
   voiceEngine->FadeOut();
   sfxEngine->FadeOut();
@@ -536,7 +497,7 @@ void __stdcall Push(int32_t *code, Command **commandsPtr,
     return;
   }
 
-  Log->Info(msg, GetCurrentThreadId(), __LINE__, __WFILE__);
+  Log->Info(msg, GetCurrentThreadId(), __LONGFILE__);
 
   delete[] msg;
   msg = nullptr;
@@ -585,8 +546,7 @@ void __stdcall Push(int32_t *code, Command **commandsPtr,
     return;
   }
   if (!SetEvent(commandLoopCtx->PushEvent)) {
-    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
     return;
   }
@@ -608,8 +568,7 @@ void __stdcall GetVoiceCount(int32_t *code, int32_t *numberOfVoices) {
     return;
   }
 
-  Log->Info(L"Called GetVoiceCount()", GetCurrentThreadId(), __LINE__,
-            __WFILE__);
+  Log->Info(L"Called GetVoiceCount()", GetCurrentThreadId(), __LONGFILE__);
 
   *numberOfVoices = voiceInfoCtx->Count;
   *code = 0;
@@ -642,7 +601,7 @@ void __stdcall GetVoiceDisplayName(int32_t *code, int32_t index,
     return;
   }
 
-  Log->Info(s, GetCurrentThreadId(), __LINE__, __WFILE__);
+  Log->Info(s, GetCurrentThreadId(), __LONGFILE__);
 
   delete[] s;
   s = nullptr;
@@ -684,7 +643,7 @@ void __stdcall GetVoiceDisplayNameLength(int32_t *code, int32_t index,
     return;
   }
   if (Log != nullptr) {
-    Log->Info(s, GetCurrentThreadId(), __LINE__, __WFILE__);
+    Log->Info(s, GetCurrentThreadId(), __LONGFILE__);
   }
 
   delete[] s;
@@ -722,7 +681,7 @@ void __stdcall GetVoiceId(int32_t *code, int32_t index, wchar_t *id) {
     return;
   }
   if (Log != nullptr) {
-    Log->Info(s, GetCurrentThreadId(), __LINE__, __WFILE__);
+    Log->Info(s, GetCurrentThreadId(), __LONGFILE__);
   }
 
   delete[] s;
@@ -763,7 +722,7 @@ void __stdcall GetVoiceIdLength(int32_t *code, int32_t index,
     return;
   }
   if (Log != nullptr) {
-    Log->Info(s, GetCurrentThreadId(), __LINE__, __WFILE__);
+    Log->Info(s, GetCurrentThreadId(), __LONGFILE__);
   }
 
   delete[] s;
@@ -803,7 +762,7 @@ void __stdcall GetVoiceLanguage(int32_t *code, int32_t index,
     return;
   }
   if (Log != nullptr) {
-    Log->Info(s, GetCurrentThreadId(), __LINE__, __WFILE__);
+    Log->Info(s, GetCurrentThreadId(), __LONGFILE__);
   }
 
   delete[] s;
@@ -845,7 +804,7 @@ void __stdcall GetVoiceLanguageLength(int32_t *code, int32_t index,
     return;
   }
   if (Log != nullptr) {
-    Log->Info(s, GetCurrentThreadId(), __LINE__, __WFILE__);
+    Log->Info(s, GetCurrentThreadId(), __LONGFILE__);
   }
 
   delete[] s;
@@ -871,8 +830,7 @@ void __stdcall GetDefaultVoice(int32_t *code, int32_t *index) {
     return;
   }
   if (Log != nullptr) {
-    Log->Info(L"Called GetDefaultVoice", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Info(L"Called GetDefaultVoice", GetCurrentThreadId(), __LONGFILE__);
   }
 
   *index = voiceInfoCtx->DefaultVoiceIndex;
@@ -894,8 +852,7 @@ void __stdcall SetDefaultVoice(int32_t *code, int32_t index) {
     return;
   }
   if (Log != nullptr) {
-    Log->Info(L"Called GetDefaultVoice", GetCurrentThreadId(), __LINE__,
-              __WFILE__);
+    Log->Info(L"Called GetDefaultVoice", GetCurrentThreadId(), __LONGFILE__);
   }
 
   voiceInfoCtx->DefaultVoiceIndex = index;
@@ -930,7 +887,7 @@ void __stdcall GetSpeakingRate(int32_t *code, int32_t index, double *rate) {
     return;
   }
   if (Log != nullptr) {
-    Log->Info(s, GetCurrentThreadId(), __LINE__, __WFILE__);
+    Log->Info(s, GetCurrentThreadId(), __LONGFILE__);
   }
 
   delete[] s;
@@ -968,7 +925,7 @@ void __stdcall SetSpeakingRate(int32_t *code, int32_t index, double rate) {
     return;
   }
   if (Log != nullptr) {
-    Log->Info(s, GetCurrentThreadId(), __LINE__, __WFILE__);
+    Log->Info(s, GetCurrentThreadId(), __LONGFILE__);
   }
 
   delete[] s;
@@ -1012,7 +969,7 @@ void __stdcall GetAudioPitch(int32_t *code, int32_t index, double *audioPitch) {
     return;
   }
   if (Log != nullptr) {
-    Log->Info(s, GetCurrentThreadId(), __LINE__, __WFILE__);
+    Log->Info(s, GetCurrentThreadId(), __LONGFILE__);
   }
 
   delete[] s;
@@ -1051,7 +1008,7 @@ void __stdcall SetAudioPitch(int32_t *code, int32_t index, double audioPitch) {
     return;
   }
   if (Log != nullptr) {
-    Log->Info(s, GetCurrentThreadId(), __LINE__, __WFILE__);
+    Log->Info(s, GetCurrentThreadId(), __LONGFILE__);
   }
 
   delete[] s;
@@ -1097,7 +1054,7 @@ void __stdcall GetAudioVolume(int32_t *code, int32_t index,
     return;
   }
   if (Log != nullptr) {
-    Log->Info(s, GetCurrentThreadId(), __LINE__, __WFILE__);
+    Log->Info(s, GetCurrentThreadId(), __LONGFILE__);
   }
 
   delete[] s;
@@ -1137,7 +1094,7 @@ void __stdcall SetAudioVolume(int32_t *code, int32_t index,
     return;
   }
   if (Log != nullptr) {
-    Log->Info(s, GetCurrentThreadId(), __LINE__, __WFILE__);
+    Log->Info(s, GetCurrentThreadId(), __LONGFILE__);
   }
 
   delete[] s;

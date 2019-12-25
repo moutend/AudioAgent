@@ -17,7 +17,7 @@ DWORD WINAPI logLoop(LPVOID context) {
   std::wstringstream wss;
   wss << L"Log output path:";
   wss << ctx->FullLogPath;
-  Log->Info(wss.str(), GetCurrentThreadId(), __LINE__, __WFILE__);
+  Log->Info(wss.str(), GetCurrentThreadId(), __LONGFILE__);
 
   bool isActive{true};
   HANDLE hLogFile{nullptr};
