@@ -62,7 +62,7 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
     return;
   }
 
-  Log = new Logger::Logger();
+  Log = new Logger::Logger(L"AudioNode", L"v0.1.0-develop", 4096);
 
   Log->Info(L"Setup audio node", GetCurrentThreadId(), __LONGFILE__);
 
