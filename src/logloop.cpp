@@ -42,7 +42,7 @@ DWORD WINAPI logLoop(LPVOID context) {
       continue;
     }
 
-    Log->Lock();
+    // Log->Lock();
 
     // json::value message = Log->ToJSON();
     json::value message;
@@ -57,7 +57,7 @@ DWORD WINAPI logLoop(LPVOID context) {
       // todo
     }
     // Log->Clear();
-    Log->Unlock();
+    // Log->Unlock();
   }
 
   return S_OK;
