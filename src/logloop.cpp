@@ -42,22 +42,23 @@ DWORD WINAPI logLoop(LPVOID context) {
       continue;
     }
 
-    // Log->Lock();
+    Log->Lock();
 
-    // json::value message = Log->ToJSON();
-    json::value message;
-    message[L"foo"] = json::value(1234);
-    try {
-      pplx::create_task([&message] {
-        http_client client(L"http://localhost:7901/v1/log");
-        return client.request(methods::POST, L"", message.serialize(),
-                              L"application/json");
-      }).then([](http_response response) {});
-    } catch (...) {
-      // todo
-    }
-    // Log->Clear();
-    // Log->Unlock();
+    json::value message = Log->ToJSON();
+
+    /*
+        try {
+          pplx::create_task([&message] {
+            http_client client(L"http://localhost:7901/v1/log");
+            return client.request(methods::POST, L"", message.serialize(),
+                                  L"application/json");
+          }).then([](http_response response) {});
+        } catch (...) {
+          // todo
+        }
+        */
+    Log->Clear();
+    Log->Unlock();
   }
 
   return S_OK;
