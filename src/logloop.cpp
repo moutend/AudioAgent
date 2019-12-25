@@ -37,7 +37,7 @@ DWORD WINAPI logLoop(LPVOID context) {
     }
 
     Sleep(5000);
-
+    continue;
     if (Log->IsEmpty()) {
       continue;
     }
