@@ -15,11 +15,6 @@ using namespace web::http::client;
 extern Logger::Logger *Log;
 
 pplx::task<http_response> postRequest(json::value postData) {
-        utility::seconds timeout(3);
-
-  http_client_config config;
-  config.set_timeout(timeout);
-
   http_client client(U("http://localhost:7901/v1/log"), config);
 
   return client.request(methods::POST, U(""), postData.serialize(),
