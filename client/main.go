@@ -1,12 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"os/user"
-	"path/filepath"
 )
 
 func main() {
@@ -17,17 +14,6 @@ func main() {
 	}
 
 	logger = log.New(file, "", log.Lshortfile|log.LUTC)
-
-	u, err := user.Current()
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	logPath = filepath.Join(u.HomeDir, "AppData", "Roaming", "YetAnotherNarrater", "Log")
-	os.MkdirAll(logPath, 0755)
-
-	fmt.Println(logPath)
 
 	mux := NewMux()
 

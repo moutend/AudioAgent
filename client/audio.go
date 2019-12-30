@@ -7,7 +7,6 @@ import (
 	"io"
 	"math"
 	"net/http"
-	"path/filepath"
 	"syscall"
 	"unsafe"
 )
@@ -138,17 +137,9 @@ func getAudioPause(w http.ResponseWriter, r *http.Request) error {
 }
 
 func getAudioEnable(w http.ResponseWriter, r *http.Request) error {
-	fullLogPath := filepath.Join(logPath, "AudioNode.ltsv")
-	fullLogPathU16ptr, err := syscall.UTF16PtrFromString(fullLogPath)
-
-	if err != nil {
-		logger.Println(err)
-		return fmt.Errorf("Internal error")
-	}
-
 	var code int32
 
-	procSetup.Call(uintptr(unsafe.Pointer(&code)), uintptr(unsafe.Pointer(fullLogPathU16ptr)), uintptr(0))
+	procSetup.Call(uintptr(unsafe.Pointer(&code)), uintptr(0))
 
 	if code != 0 {
 		logger.Printf("Failed to call Setup()")
