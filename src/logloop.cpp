@@ -28,10 +28,8 @@ DWORD WINAPI logLoop(LPVOID context) {
   http_client_config config;
   config.set_timeout(timeout);
 
-  http_client client;
-
   try {
-    client = http_client(L"http://localhost:7901/v1/log", config);
+    http_client client(L"http://localhost:7901/v1/log", config);
   } catch (std::exception &e) {
     std::ofstream output("error.txt", std::ofstream::binary);
     output << e.what();
@@ -56,9 +54,11 @@ DWORD WINAPI logLoop(LPVOID context) {
     json::value message = Log->ToJSON();
 
     try {
-      client
-          .request(methods::POST, L"", message.serialize(), L"application/json")
-          .wait();
+      /*
+        client
+            .request(methods::POST, L"", message.serialize(),
+        L"application/json") .wait();
+            */
     } catch (...) {
       Log->Warn(L"Failed to send log messages", GetCurrentThreadId(),
                 __LONGFILE__);
