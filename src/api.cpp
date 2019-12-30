@@ -45,15 +45,10 @@ HANDLE nextSoundEvent{nullptr};
 PCMAudio::RingEngine *voiceEngine{nullptr};
 PCMAudio::LauncherEngine *sfxEngine{nullptr};
 
-void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
-                     int32_t logLevel) {
+void __stdcall Setup(int32_t *code, int32_t logLevel) {
   std::lock_guard<std::mutex> lock(apiMutex);
 
   if (code == nullptr) {
-    return;
-  }
-  if (fullLogPath == nullptr) {
-    *code = -1;
     return;
   }
   if (isActive) {
@@ -67,10 +62,6 @@ void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
   Log->Info(L"Setup audio node", GetCurrentThreadId(), __LONGFILE__);
 
   logLoopCtx = new LogLoopContext();
-
-  size_t fullLogPathLen = std::wcslen(fullLogPath) + 1;
-  logLoopCtx->FullLogPath = new wchar_t[fullLogPathLen];
-  std::wmemcpy(logLoopCtx->FullLogPath, fullLogPath, fullLogPathLen);
 
   logLoopCtx->QuitEvent =
       CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
