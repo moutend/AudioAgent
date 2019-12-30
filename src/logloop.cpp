@@ -1,4 +1,3 @@
-#include <chrono>
 #include <cpplogger/cpplogger.h>
 #include <cpprest/http_client.h>
 #include <iostream>
@@ -16,7 +15,7 @@ using namespace web::http::client;
 extern Logger::Logger *Log;
 
 pplx::task<http_response> postRequest(json::value postData) {
-  std::chrono::seconds timeout(3);
+        utility::seconds timeout(3);
 
   http_client_config config;
   config.set_timeout(timeout);
