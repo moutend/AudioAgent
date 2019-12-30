@@ -25,8 +25,8 @@ DWORD WINAPI logLoop(LPVOID context) {
 
   http_client_config config;
   config.set_timeout(timeout);
-  http_client client(L"http://localhost:7901/v1/log", config);
   Sleep(3000);
+  http_client client(L"http://localhost:7901/v1/log", config);
 
   while (isActive) {
     HANDLE waitArray[1] = {ctx->QuitEvent};
