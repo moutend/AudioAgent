@@ -21,7 +21,7 @@ pplx::task<http_response> postRequest(json::value postData) {
   http_client_config config;
   config.set_timeout(timeout);
 
-  http_client client(U("http://localhost:7901/v1/log"), config);
+  http_client client(U("http://localhost:7901/v1/log"));
 
   return client.request(methods::POST, U(""), postData.serialize(),
                         U("application/json"));
