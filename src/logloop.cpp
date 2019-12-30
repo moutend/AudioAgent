@@ -1,7 +1,9 @@
 #include <chrono>
 #include <cpplogger/cpplogger.h>
 #include <cpprest/http_client.h>
+#include <iostream>
 #include <sstream>
+#include <stdexcept>
 
 #include "context.h"
 #include "logloop.h"
@@ -25,8 +27,13 @@ DWORD WINAPI logLoop(LPVOID context) {
 
   http_client_config config;
   config.set_timeout(timeout);
-  Sleep(3000);
-  http_client client(L"http://localhost:7901/v1/log", config);
+  try {
+    http_client client(L"http://localhost:7901/v1/log", config);
+  } catch (std::exception &e) {
+    std::ofstream output("error.txt", std::ofstream::binary);
+    output << e.what();
+    output.close();
+  }
 
   while (isActive) {
     HANDLE waitArray[1] = {ctx->QuitEvent};
