@@ -19,13 +19,12 @@ DWORD WINAPI logLoop(LPVOID context) {
     return E_FAIL;
   }
 
-  std::wstringstream wss;
-  wss << L"Log output path:";
-  wss << ctx->FullLogPath;
-  Log->Info(wss.str(), GetCurrentThreadId(), __LONGFILE__);
-
   bool isActive{true};
-  HANDLE hLogFile{nullptr};
+  std::chrono::milliseconds timeout(3000);
+
+  http_client_config config;
+  config.set_timeout(timeout);
+  http_client client(L"http://127.0.0.1:7901/v1/log", config);
 
   while (isActive) {
     HANDLE waitArray[1] = {ctx->QuitEvent};
@@ -44,9 +43,16 @@ DWORD WINAPI logLoop(LPVOID context) {
 
     json::value message = Log->ToJSON();
 
-    http_client client(L"http://localhost:7901/v1/log");
-    client.request(methods::POST, L"", message.serialize(), L"application/json")
-        .wait();
+    try {
+      client
+          .request(methods::POST, L"", message.serialize(), L"application/json")
+          .wait();
+    } catch (...) {
+      Log->Warn(L"Failed to send log messages", GetCurrentThreadId(),
+                __LONGFILE__);
+
+      continue;
+    }
 
     Log->Clear();
   }
