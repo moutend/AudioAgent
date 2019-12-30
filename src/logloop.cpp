@@ -15,6 +15,18 @@ using namespace web::http::client;
 
 extern Logger::Logger *Log;
 
+pplx::task<http_response> postRequest(json::value postData) {
+  std::chrono::milliseconds timeout(3000);
+
+  http_client_config config;
+  config.set_timeout(timeout);
+
+  http_client client(U("http://localhost:7901/v1/log"), config);
+
+  return client.request(methods::POST, U(""), postData.serialize(),
+                        U("application/json"));
+}
+
 DWORD WINAPI logLoop(LPVOID context) {
   LogLoopContext *ctx = static_cast<LogLoopContext *>(context);
 
@@ -23,18 +35,6 @@ DWORD WINAPI logLoop(LPVOID context) {
   }
 
   bool isActive{true};
-  std::chrono::milliseconds timeout(3000);
-
-  http_client_config config;
-  config.set_timeout(timeout);
-
-  try {
-    http_client client(U("http://localhost:7901/v1/log"), config);
-  } catch (...) {
-    std::ofstream output("/Users/koyanagi/error.txt", std::ofstream::binary);
-    output << "oops!";
-    output.close();
-  }
 
   while (isActive) {
     HANDLE waitArray[1] = {ctx->QuitEvent};
@@ -54,11 +54,7 @@ DWORD WINAPI logLoop(LPVOID context) {
     json::value message = Log->ToJSON();
 
     try {
-      /*
-        client
-            .request(methods::POST, L"", message.serialize(),
-        L"application/json") .wait();
-            */
+      postRequest(message).wait();
     } catch (...) {
       Log->Warn(L"Failed to send log messages", GetCurrentThreadId(),
                 __LONGFILE__);
