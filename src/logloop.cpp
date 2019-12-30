@@ -22,11 +22,11 @@ DWORD WINAPI logLoop(LPVOID context) {
 
   bool isActive{true};
   std::chrono::milliseconds timeout(3000);
-  Sleep(3000);
 
   http_client_config config;
   config.set_timeout(timeout);
   http_client client(L"http://127.0.0.1:7901/v1/log", config);
+  Sleep(3000);
 
   while (isActive) {
     HANDLE waitArray[1] = {ctx->QuitEvent};
