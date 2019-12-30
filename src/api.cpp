@@ -504,6 +504,7 @@ void __stdcall Push(int32_t *code, Command **commandsPtr,
 
     switch (commandsPtr[i]->Type) {
     case 1:
+  Log->Info(L"command.type=1", GetCurrentThreadId(), __LONGFILE__);
       commandLoopCtx->Commands[offset]->SFXIndex = commandsPtr[i]->SFXIndex;
       break;
     case 2:
@@ -512,6 +513,7 @@ void __stdcall Push(int32_t *code, Command **commandsPtr,
       break;
     case 3: // Generate voice from plain text
     case 4: // Generate voice from SSML
+  Log->Info(L"command.type=voice", GetCurrentThreadId(), __LONGFILE__);
       delete[] commandLoopCtx->Commands[offset]->Text;
       commandLoopCtx->Commands[offset]->Text = nullptr;
 
