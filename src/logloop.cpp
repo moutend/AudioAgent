@@ -29,7 +29,7 @@ DWORD WINAPI logLoop(LPVOID context) {
   config.set_timeout(timeout);
 
   try {
-    http_client client(L"http://localhost:7901/v1/log", config);
+    http_client client(U("http://localhost:7901/v1/log"), config);
   } catch (...) {
     std::ofstream output("/Users/koyanagi/error.txt", std::ofstream::binary);
     output << "oops!";
