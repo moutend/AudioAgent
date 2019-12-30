@@ -1,3 +1,4 @@
+#include <chrono>
 #include <cpplogger/cpplogger.h>
 #include <cpprest/http_client.h>
 #include <sstream>
@@ -21,6 +22,7 @@ DWORD WINAPI logLoop(LPVOID context) {
 
   bool isActive{true};
   std::chrono::milliseconds timeout(3000);
+  Sleep(3000);
 
   http_client_config config;
   config.set_timeout(timeout);
