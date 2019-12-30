@@ -57,17 +57,17 @@ func postAudioCommand(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("Requested JSON is invalid")
 	}
 
-	rawCommands := make([]uintptr, len(req.Commands), len(req.Commands))
+	cs := make([]rawCommand, len(req.Commands), len(req.Commands))
+	ps := make([]uintptr, len(req.Commands), len(req.Commands))
 
 	for i, v := range req.Commands {
-		c := rawCommand{
-			Type: v.Type,
-		}
+		cs[i].Type = v.Type
+
 		switch v.Type {
 		case enumSFX:
-			c.SFXIndex = int16(v.Value.(float64))
+			cs[i].SFXIndex = int16(v.Value.(float64))
 		case enumWait:
-			c.WaitDuration = uintptr(math.Float64bits(v.Value.(float64)))
+			cs[i].WaitDuration = uintptr(math.Float64bits(v.Value.(float64)))
 		case enumText, enumSSML:
 			text := v.Value.(string)
 			textU16Ptr, err := syscall.UTF16PtrFromString(text)
@@ -77,18 +77,20 @@ func postAudioCommand(w http.ResponseWriter, r *http.Request) error {
 				return fmt.Errorf("Internal error")
 			}
 
-			c.Text = uintptr(unsafe.Pointer(textU16Ptr))
+			cs[i].Text = uintptr(unsafe.Pointer(textU16Ptr))
 		default:
+			cs[i].Type = enumWait
 			continue
 		}
 
-		rawCommands[i] = uintptr(unsafe.Pointer(&c))
+		logger.Printf("cmds[%d]=%x\n", i, uintptr(unsafe.Pointer(&cs[i])))
+		ps[i] = uintptr(unsafe.Pointer(&cs[i]))
 	}
 
 	var code int32
 
-	if len(rawCommands) > 0 {
-		procPush.Call(uintptr(unsafe.Pointer(&code)), uintptr(unsafe.Pointer(&rawCommands[0])), uintptr(len(rawCommands)), uintptr(isForcePush))
+	if len(ps) > 0 {
+		procPush.Call(uintptr(unsafe.Pointer(&code)), uintptr(unsafe.Pointer(&ps[0])), uintptr(len(ps)), uintptr(isForcePush))
 	}
 	if code != 0 {
 		logger.Printf("Failed to call Push (code=%v)", code)
