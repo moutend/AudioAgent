@@ -7,8 +7,7 @@
 #define export __declspec(dllexport)
 
 extern "C" {
-export void __stdcall Setup(int32_t *code, const wchar_t *fullLogPath,
-                            int32_t logLevel);
+export void __stdcall Setup(int32_t *code, int32_t logLevel);
 export void __stdcall Teardown(int32_t *code);
 
 export void __stdcall FadeIn(int32_t *code);
