@@ -504,7 +504,8 @@ void __stdcall Push(int32_t *code, Command **commandsPtr,
 
     switch (commandsPtr[i]->Type) {
     case 1:
-      commandLoopCtx->Commands[offset]->SFXIndex = commandsPtr[i]->SFXIndex;
+      commandLoopCtx->Commands[offset]->SFXIndex =
+          commandsPtr[i]->SFXIndex <= 0 ? 0 : commandsPtr[i]->SFXIndex - 1;
       break;
     case 2:
       commandLoopCtx->Commands[offset]->WaitDuration =
