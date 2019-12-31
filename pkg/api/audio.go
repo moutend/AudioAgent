@@ -72,7 +72,6 @@ func PostAudioCommand(w http.ResponseWriter, r *http.Request) error {
 			continue
 		}
 
-		log.Printf("cmds[%d]=%x\n", i, uintptr(unsafe.Pointer(&cs[i])))
 		ps[i] = uintptr(unsafe.Pointer(&cs[i]))
 	}
 
