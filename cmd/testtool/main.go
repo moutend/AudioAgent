@@ -46,7 +46,7 @@ func main() {
 				go http.Get("http://localhost:7902/v1/audio/disable")
 			case termbox.KeySpace:
 			default:
-				v := 0
+				v := 1
 
 				if ev.Ch == []rune("j")[0] {
 					v = 55

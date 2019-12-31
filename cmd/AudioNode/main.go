@@ -55,6 +55,8 @@ func run(args []string) error {
 		return err
 	}
 
+	log.Println("Setup is completed")
+
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
@@ -63,6 +65,8 @@ func run(args []string) error {
 	if err := app.Teardown(); err != nil {
 		return err
 	}
+
+	log.Println("Teardown is completed")
 
 	return nil
 }
