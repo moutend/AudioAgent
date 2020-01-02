@@ -59,7 +59,7 @@ void __stdcall Setup(int32_t *code, int32_t logLevel) {
 
   Log = new Logger::Logger(L"AudioNode", L"v0.1.0-develop", 4096);
 
-  Log->Info(L"Setup audio node", GetCurrentThreadId(), __LONGFILE__);
+  Log->Info(L"Setup AudioNode", GetCurrentThreadId(), __LONGFILE__);
 
   logLoopCtx = new LogLoopContext();
 
@@ -308,7 +308,7 @@ void __stdcall Setup(int32_t *code, int32_t logLevel) {
     return;
   }
 
-  Log->Info(L"Complete setup audio node", GetCurrentThreadId(), __LONGFILE__);
+  Log->Info(L"Complete setup AudioNode", GetCurrentThreadId(), __LONGFILE__);
 
   isActive = true;
   *code = 0;
@@ -325,7 +325,7 @@ void __stdcall Teardown(int32_t *code) {
     return;
   }
 
-  Log->Info(L"Teardown audio node", GetCurrentThreadId(), __LONGFILE__);
+  Log->Info(L"Teardown AudioNode", GetCurrentThreadId(), __LONGFILE__);
 
   if (!SetEvent(commandLoopCtx->QuitEvent)) {
     Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LONGFILE__);
@@ -408,8 +408,7 @@ void __stdcall Teardown(int32_t *code) {
   delete sfxLoopCtx;
   sfxLoopCtx = nullptr;
 
-  Log->Info(L"Complete teardown audio node", GetCurrentThreadId(),
-            __LONGFILE__);
+  Log->Info(L"Complete teardown AudioNode", GetCurrentThreadId(), __LONGFILE__);
 
   if (!SetEvent(logLoopCtx->QuitEvent)) {
     Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LONGFILE__);
