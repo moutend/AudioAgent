@@ -445,7 +445,7 @@ END_VOICERENDER_CLEANUP:
 
   Log->Info(L"Delete SFX loop thread", GetCurrentThreadId(), __LONGFILE__);
 
-  END_SFXLOOP_CLEANUP;
+END_SFXLOOP_CLEANUP:
 
   if (sfxRenderThread == nullptr) {
     goto END_SFXRENDER_CLEANUP;
