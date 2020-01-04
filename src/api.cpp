@@ -385,6 +385,7 @@ END_COMMANDLOOP_CLEANUP:
     delete[] voiceInfoCtx->VoiceProperties[i]->Language;
     voiceInfoCtx->VoiceProperties[i]->Language = nullptr;
   }
+  Sleep(5000);
 
   delete[] voiceInfoCtx->VoiceProperties;
   voiceInfoCtx->VoiceProperties = nullptr;
@@ -398,7 +399,6 @@ END_COMMANDLOOP_CLEANUP:
   Log->Info(L"Delete voice loop thread", GetCurrentThreadId(), __LONGFILE__);
 
 END_VOICELOOP_CLEANUP:
-Sleep(5000);
 
   if (voiceRenderThread == nullptr) {
     goto END_VOICERENDER_CLEANUP;
