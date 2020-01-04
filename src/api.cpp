@@ -355,7 +355,7 @@ void __stdcall Teardown(int32_t *code) {
   Log->Info(L"Delete command loop thread", GetCurrentThreadId(), __LONGFILE__);
 
 END_COMMANDLOOP_CLEANUP:
-
+Sleep(5000);
   if (voiceLoopThread == nullptr) {
     goto END_VOICELOOP_CLEANUP;
   }
