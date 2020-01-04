@@ -35,8 +35,8 @@ HANDLE logLoopThread{nullptr};
 HANDLE commandLoopThread{nullptr};
 HANDLE voiceInfoThread{nullptr};
 HANDLE voiceLoopThread{nullptr};
-HANDLE sfxLoopThread{nullptr};
 HANDLE voiceRenderThread{nullptr};
+HANDLE sfxLoopThread{nullptr};
 HANDLE sfxRenderThread{nullptr};
 
 HANDLE nextVoiceEvent{nullptr};
@@ -56,6 +56,8 @@ void __stdcall Setup(int32_t *code, int32_t logLevel) {
     *code = -1;
     return;
   }
+
+  isActive = true;
 
   Log = new Logger::Logger(L"AudioNode", L"v0.1.0-develop", 4096);
 
@@ -309,9 +311,6 @@ void __stdcall Setup(int32_t *code, int32_t logLevel) {
   }
 
   Log->Info(L"Complete setup AudioNode", GetCurrentThreadId(), __LONGFILE__);
-
-  isActive = true;
-  *code = 0;
 }
 
 void __stdcall Teardown(int32_t *code) {
@@ -327,6 +326,9 @@ void __stdcall Teardown(int32_t *code) {
 
   Log->Info(L"Teardown AudioNode", GetCurrentThreadId(), __LONGFILE__);
 
+  if (commandLoopThread == nullptr) {
+    goto END_COMMANDLOOP_CLEANUP;
+  }
   if (!SetEvent(commandLoopCtx->QuitEvent)) {
     Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
@@ -336,8 +338,27 @@ void __stdcall Teardown(int32_t *code) {
   WaitForSingleObject(commandLoopThread, INFINITE);
   SafeCloseHandle(&commandLoopThread);
 
+  for (int32_t i = 0; i < commandLoopCtx->MaxCommands; i++) {
+    delete[] commandLoopCtx->Commands[i]->Text;
+    commandLoopCtx->Commands[i]->Text = nullptr;
+
+    delete commandLoopCtx->Commands[i];
+    commandLoopCtx->Commands[i] = nullptr;
+  }
+
+  SafeCloseHandle(&(commandLoopCtx->PushEvent));
+  SafeCloseHandle(&(commandLoopCtx->QuitEvent));
+
+  delete commandLoopCtx;
+  commandLoopCtx = nullptr;
+
   Log->Info(L"Delete command loop thread", GetCurrentThreadId(), __LONGFILE__);
 
+END_COMMANDLOOP_CLEANUP:
+
+  if (voiceLoopThread == nullptr) {
+    goto END_VOICELOOP_CLEANUP;
+  }
   if (!SetEvent(voiceLoopCtx->QuitEvent)) {
     Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
@@ -347,8 +368,40 @@ void __stdcall Teardown(int32_t *code) {
   WaitForSingleObject(voiceLoopThread, INFINITE);
   SafeCloseHandle(&voiceLoopThread);
 
+  SafeCloseHandle(&(voiceLoopCtx->QuitEvent));
+  SafeCloseHandle(&(voiceLoopCtx->NextEvent));
+  SafeCloseHandle(&(voiceLoopCtx->FeedEvent));
+
+  delete[] voiceLoopCtx->Text;
+  voiceLoopCtx->Text = nullptr;
+
+  for (unsigned int i = 0; i < voiceInfoCtx->Count; i++) {
+    delete[] voiceInfoCtx->VoiceProperties[i]->Id;
+    voiceInfoCtx->VoiceProperties[i]->Id = nullptr;
+
+    delete[] voiceInfoCtx->VoiceProperties[i]->DisplayName;
+    voiceInfoCtx->VoiceProperties[i]->DisplayName = nullptr;
+
+    delete[] voiceInfoCtx->VoiceProperties[i]->Language;
+    voiceInfoCtx->VoiceProperties[i]->Language = nullptr;
+  }
+
+  delete[] voiceInfoCtx->VoiceProperties;
+  voiceInfoCtx->VoiceProperties = nullptr;
+
+  delete voiceInfoCtx;
+  voiceInfoCtx = nullptr;
+
+  delete voiceLoopCtx;
+  voiceLoopCtx = nullptr;
+
   Log->Info(L"Delete voice loop thread", GetCurrentThreadId(), __LONGFILE__);
 
+END_VOICELOOP_CLEANUP:
+
+  if (voiceRenderThread == nullptr) {
+    goto END_VOICERENDER_CLEANUP;
+  }
   if (!SetEvent(voiceRenderCtx->QuitEvent)) {
     Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
@@ -358,8 +411,22 @@ void __stdcall Teardown(int32_t *code) {
   WaitForSingleObject(voiceRenderThread, INFINITE);
   SafeCloseHandle(&voiceRenderThread);
 
+  SafeCloseHandle(&(voiceRenderCtx->NextEvent));
+  SafeCloseHandle(&(voiceRenderCtx->QuitEvent));
+
+  delete voiceRenderCtx;
+  voiceRenderCtx = nullptr;
+
+  delete voiceEngine;
+  voiceEngine = nullptr;
+
   Log->Info(L"Delete voice render thread", GetCurrentThreadId(), __LONGFILE__);
 
+END_VOICERENDER_CLEANUP:
+
+  if (sfxLoopThread == nullptr) {
+    goto END_SFXLOOP_CLEANUP;
+  }
   if (!SetEvent(sfxLoopCtx->QuitEvent)) {
     Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
@@ -369,8 +436,20 @@ void __stdcall Teardown(int32_t *code) {
   WaitForSingleObject(sfxLoopThread, INFINITE);
   SafeCloseHandle(&sfxLoopThread);
 
+  SafeCloseHandle(&(sfxLoopCtx->FeedEvent));
+  SafeCloseHandle(&(sfxLoopCtx->NextEvent));
+  SafeCloseHandle(&(sfxLoopCtx->QuitEvent));
+
+  delete sfxLoopCtx;
+  sfxLoopCtx = nullptr;
+
   Log->Info(L"Delete SFX loop thread", GetCurrentThreadId(), __LONGFILE__);
 
+  END_SFXLOOP_CLEANUP;
+
+  if (sfxRenderThread == nullptr) {
+    goto END_SFXRENDER_CLEANUP;
+  }
   if (!SetEvent(sfxRenderCtx->QuitEvent)) {
     Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
@@ -380,36 +459,24 @@ void __stdcall Teardown(int32_t *code) {
   WaitForSingleObject(sfxRenderThread, INFINITE);
   SafeCloseHandle(&sfxRenderThread);
 
-  Log->Info(L"Delete SFX render thread", GetCurrentThreadId(), __LONGFILE__);
-
-  delete voiceEngine;
-  voiceEngine = nullptr;
+  SafeCloseHandle(&(sfxRenderCtx->NextEvent));
+  SafeCloseHandle(&(sfxRenderCtx->QuitEvent));
 
   delete sfxEngine;
   sfxEngine = nullptr;
 
+  Log->Info(L"Delete SFX render thread", GetCurrentThreadId(), __LONGFILE__);
+
+END_SFXRENDER_CLEANUP:
+
   SafeCloseHandle(&nextVoiceEvent);
   SafeCloseHandle(&nextSoundEvent);
 
-  for (int32_t i = 0; i < commandLoopCtx->MaxCommands; i++) {
-    delete[] commandLoopCtx->Commands[i]->Text;
-    commandLoopCtx->Commands[i]->Text = nullptr;
-
-    delete commandLoopCtx->Commands[i];
-    commandLoopCtx->Commands[i] = nullptr;
-  }
-
-  delete commandLoopCtx;
-  commandLoopCtx = nullptr;
-
-  delete voiceLoopCtx;
-  voiceLoopCtx = nullptr;
-
-  delete sfxLoopCtx;
-  sfxLoopCtx = nullptr;
-
   Log->Info(L"Complete teardown AudioNode", GetCurrentThreadId(), __LONGFILE__);
 
+  if (logLoopThread == nullptr) {
+    goto END_LOGLOOP_CLEANUP;
+  }
   if (!SetEvent(logLoopCtx->QuitEvent)) {
     Log->Fail(L"Failed to send event", GetCurrentThreadId(), __LONGFILE__);
     *code = -1;
@@ -418,6 +485,13 @@ void __stdcall Teardown(int32_t *code) {
 
   WaitForSingleObject(logLoopThread, INFINITE);
   SafeCloseHandle(&logLoopThread);
+
+  SafeCloseHandle(&(logLoopCtx->QuitEvent));
+
+  delete logLoopCtx;
+  logLoopCtx = nullptr;
+
+END_LOGLOOP_CLEANUP:
 
   isActive = false;
 }

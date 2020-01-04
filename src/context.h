@@ -7,7 +7,6 @@
 
 struct LogLoopContext {
   HANDLE QuitEvent = nullptr;
-  HANDLE FlushEvent = nullptr;
 };
 
 struct VoiceProperty {
