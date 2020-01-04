@@ -373,9 +373,6 @@ END_COMMANDLOOP_CLEANUP:
   SafeCloseHandle(&(voiceLoopCtx->FeedEvent));
   Sleep(5000);
 
-  delete[] voiceLoopCtx->Text;
-  voiceLoopCtx->Text = nullptr;
-
   for (unsigned int i = 0; i < voiceInfoCtx->Count; i++) {
     delete[] voiceInfoCtx->VoiceProperties[i]->Id;
     voiceInfoCtx->VoiceProperties[i]->Id = nullptr;
