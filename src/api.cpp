@@ -398,6 +398,7 @@ END_COMMANDLOOP_CLEANUP:
   Log->Info(L"Delete voice loop thread", GetCurrentThreadId(), __LONGFILE__);
 
 END_VOICELOOP_CLEANUP:
+Sleep(5000);
 
   if (voiceRenderThread == nullptr) {
     goto END_VOICERENDER_CLEANUP;
@@ -423,7 +424,6 @@ END_VOICELOOP_CLEANUP:
   Log->Info(L"Delete voice render thread", GetCurrentThreadId(), __LONGFILE__);
 
 END_VOICERENDER_CLEANUP:
-Sleep(5000);
 
   if (sfxLoopThread == nullptr) {
     goto END_SFXLOOP_CLEANUP;
