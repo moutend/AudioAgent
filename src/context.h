@@ -31,7 +31,7 @@ struct VoiceLoopContext {
   bool IsSSML = false;
   wchar_t *Text = nullptr;
   PCMAudio::RingEngine *VoiceEngine = nullptr;
-  unsigned int VoiceCount = 0;
+  // unsigned int VoiceCount = 0;
   VoiceInfoContext *VoiceInfoCtx = nullptr;
 };
 

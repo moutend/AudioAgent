@@ -374,6 +374,7 @@ END_COMMANDLOOP_CLEANUP:
 
   delete[] voiceLoopCtx->Text;
   voiceLoopCtx->Text = nullptr;
+  Sleep(5000);
 
   for (unsigned int i = 0; i < voiceInfoCtx->Count; i++) {
     delete[] voiceInfoCtx->VoiceProperties[i]->Id;
@@ -385,7 +386,6 @@ END_COMMANDLOOP_CLEANUP:
     delete[] voiceInfoCtx->VoiceProperties[i]->Language;
     voiceInfoCtx->VoiceProperties[i]->Language = nullptr;
   }
-  Sleep(5000);
 
   delete[] voiceInfoCtx->VoiceProperties;
   voiceInfoCtx->VoiceProperties = nullptr;
